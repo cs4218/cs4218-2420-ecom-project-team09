@@ -24,10 +24,8 @@ describe('Payment Controllers', () => {
   let mockGateway;
 
   beforeEach(() => {
-    // Reset all mocks
     jest.clearAllMocks();
 
-    // Setup mock request and response
     mockRequest = {
       body: {},
       user: { _id: 'test-user-id' }
@@ -39,7 +37,6 @@ describe('Payment Controllers', () => {
       json: jest.fn()
     };
 
-    // Get reference to the mocked gateway instance
     mockGateway = new braintree.BraintreeGateway({
         environment: braintree.Environment.Sandbox,
         merchantId: 'mock-merchant-id',
@@ -76,17 +73,6 @@ describe('Payment Controllers', () => {
       expect(mockResponse.status).toHaveBeenCalledWith(500);
       expect(mockResponse.send).toHaveBeenCalledWith(mockError);
     });
-
-    // test("should return 500 if gateway is missing", async () => {      
-    //     await braintreeTokenController(mockRequest, mockResponse, undefined); // No gateway
-      
-    //     expect(mockResponse.status).toHaveBeenCalledWith(500);
-    //     expect(mockResponse.json).toHaveBeenCalledWith({
-    //         success: false,
-    //         message: "Internal Server Error",
-    //         error,
-    //       });
-    //   });      
   });
 
   describe('braintreePaymentController', () => {
@@ -137,7 +123,6 @@ describe('Payment Controllers', () => {
         buyer: 'test-user-id'
       });
 
-        // Verify response
         expect(mockResponse.json).toHaveBeenCalledWith({ ok: true });
         expect(mockResponse.status).toHaveBeenCalledWith(200);
     });
@@ -192,20 +177,65 @@ describe('Payment Controllers', () => {
                 ...mockRequest.body,
                 cart: cartWithNegativePrices
             }};
-      
-        // Call the controller function
+
         await brainTreePaymentController(mockCartWithNegativePricesRequest, mockResponse, mockGateway);
       
-        // Ensure that the response is appropriate for invalid prices
         expect(mockResponse.status).toHaveBeenCalledWith(400);
-        expect(mockResponse.json).toHaveBeenCalledWith({
-          error: 'Invalid price in cart, prices must be non-negative'
-        });
+        expect(mockResponse.send).toHaveBeenCalledWith(new Error('Invalid price in cart, prices must be non-negative'));
       
         // Ensure the transaction was not called
         expect(mockGateway.transaction.sale).not.toHaveBeenCalled();
       });
-      
+
+      test('should handle non-numeric prices in cart', async () => {
+        const cartWithInvalidPrices = [
+          { price: 99.99 },
+          { price: "invalid" },  // Non-numeric price
+          { price: null },       // Null value
+          { price: undefined },  // Undefined value
+          { price: {} },         // Object instead of a number
+        ];
+    
+        const mockCartWithInvalidPricesRequest = {
+            ...mockRequest,
+            body: {
+                ...mockRequest.body,
+                cart: cartWithInvalidPrices
+            }
+        };
+    
+        await brainTreePaymentController(mockCartWithInvalidPricesRequest, mockResponse, mockGateway);
+    
+        expect(mockResponse.status).toHaveBeenCalledWith(400);
+        expect(mockResponse.send).toHaveBeenCalledWith(new Error('Invalid price in cart, prices must be numeric'));
+    
+        // Ensure the transaction was not called
+        expect(mockGateway.transaction.sale).not.toHaveBeenCalled();
+    });  
+    
+    test('should return 400 if any item in cart is missing a price', async () => {
+      const cartWithMissingPrice = [
+        { name: "Item 1", price: 100 },
+        { name: "Item 2" }, // Missing price
+      ];
+    
+      const mockRequestWithMissingPrice = {
+        ...mockRequest,
+        body: {
+          nonce: "test-payment-nonce",
+          cart: cartWithMissingPrice,
+        },
+      };
+    
+      await brainTreePaymentController(mockRequestWithMissingPrice, mockResponse, mockGateway);
+    
+      expect(mockResponse.status).toHaveBeenCalledWith(400);
+      expect(mockResponse.send).toHaveBeenCalledWith(new Error("Price is missing in cart"));
+    
+      // Ensure the transaction was not called
+      expect(mockGateway.transaction.sale).not.toHaveBeenCalled();
+    });    
+    
     test('should handle empty cart', async () => {
       const mockEmptyCartRequest = {
         ...mockRequest,
@@ -222,12 +252,66 @@ describe('Payment Controllers', () => {
 
       await brainTreePaymentController(mockEmptyCartRequest, mockResponse, mockGateway);
 
-        // Verify that the response returns the correct status and message for empty cart
-        expect(mockResponse.status).toHaveBeenCalledWith(400);
-        expect(mockResponse.json).toHaveBeenCalledWith({ error: "Cart is empty, cannot process payment" });
+      expect(mockResponse.status).toHaveBeenCalledWith(400);
+      expect(mockResponse.send).toHaveBeenCalledWith(new Error("Cart is empty, cannot process payment"));
 
-        // Ensure the payment gateway transaction wasn't called
-        expect(mockGateway.transaction.sale).not.toHaveBeenCalled();
+      // Ensure the payment gateway transaction wasn't called
+      expect(mockGateway.transaction.sale).not.toHaveBeenCalled();
+    });
+
+    test('should return 400 if payment nonce is missing', async () => {
+      const mockRequestWithoutNonce = {
+        ...mockRequest,
+        body: {
+          cart: mockCart, // Valid cart, but no nonce
+        },
+      };
+    
+      await brainTreePaymentController(mockRequestWithoutNonce, mockResponse, mockGateway);
+    
+      expect(mockResponse.status).toHaveBeenCalledWith(400);
+      expect(mockResponse.send).toHaveBeenCalledWith(new Error("Payment method nonce is required"));
+    
+      // Ensure the payment gateway transaction wasn't called
+      expect(mockGateway.transaction.sale).not.toHaveBeenCalled();
+    });    
+
+    test('should return 500 if order saving fails', async () => {
+      const mockResult = {
+        success: true,
+        transaction: { id: "test-transaction-id" },
+      };
+
+      const databaseSaveError = new Error("Database save error");
+    
+      mockGateway.transaction.sale.mockImplementation((options, callback) => {
+        callback(null, mockResult);
+      });
+    
+      orderModel.mockImplementation(() => ({
+        save: jest.fn().mockRejectedValue(databaseSaveError),
+      }));
+    
+      await brainTreePaymentController(mockRequest, mockResponse, mockGateway);
+    
+      expect(mockResponse.status).toHaveBeenCalledWith(500);
+      expect(mockResponse.send).toHaveBeenCalledWith(databaseSaveError);
+    });
+
+    test('should return 500 if Braintree transaction fails', async () => {
+      const mockFailedResult = {
+        success: false,
+        message: "Transaction declined",
+      };
+    
+      mockGateway.transaction.sale.mockImplementation((options, callback) => {
+        callback(null, mockFailedResult);
+      });
+    
+      await brainTreePaymentController(mockRequest, mockResponse, mockGateway);
+    
+      expect(mockResponse.status).toHaveBeenCalledWith(500);
+      expect(mockResponse.send).toHaveBeenCalledWith(new Error("Transaction declined"));
     });
   });
 });
