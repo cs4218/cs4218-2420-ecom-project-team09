@@ -347,7 +347,7 @@ export const brainTreePaymentController = async (req, res, gatewayParam=gateway)
   try {
     const { nonce, cart } = req.body;
 
-    // Check if the nonce is missing
+    //Check if the nonce is missing 
     if (!nonce) {
       return res.status(400).send(new Error("Payment method nonce is required"));
     }

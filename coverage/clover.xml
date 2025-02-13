@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<coverage generated="1739378165492" clover="3.2.0">
-  <project timestamp="1739378165492" name="All files">
+<coverage generated="1739411222531" clover="3.2.0">
+  <project timestamp="1739411222531" name="All files">
     <metrics statements="279" coveredstatements="50" conditionals="100" coveredconditionals="21" methods="30" coveredmethods="5" elements="409" coveredelements="76" complexity="0" loc="279" ncloc="279" packages="1" files="3" classes="3"/>
     <file name="authController.js" path="/Users/solomonng/Documents/NUS/AY2425S2/CS4218/cs4218-2420-ecom-project-team09/controllers/authController.js">
       <metrics statements="91" coveredstatements="0" conditionals="44" coveredconditionals="0" methods="8" coveredmethods="0"/>

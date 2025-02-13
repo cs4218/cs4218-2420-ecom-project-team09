@@ -60,7 +60,7 @@ describe('Payment Controllers', () => {
         expect(mockResponse.send).toHaveBeenCalledWith(mockToken);
     });
 
-    test('should handle token generation error', async () => {
+    test('should return 500 if token generation error', async () => {
       // Mock token generation error
       const mockError = new Error('Token generation failed');
       mockGateway.clientToken.generate.mockImplementation((options, callback) => {
@@ -127,7 +127,7 @@ describe('Payment Controllers', () => {
         expect(mockResponse.status).toHaveBeenCalledWith(200);
     });
 
-    test('should handle payment processing error', async () => {
+    test('should return 500 if payment processing error', async () => {
       // Mock transaction error
       const mockError = new Error('Payment processing failed');
       mockGateway.transaction.sale.mockImplementation((options, callback) => {
@@ -164,7 +164,7 @@ describe('Payment Controllers', () => {
       await brainTreePaymentController(mockComplexCartRequest, mockResponse, mockGateway);
     });
 
-    test('should handle negative prices in cart', async () => {
+    test('should return 400 if negative prices in cart', async () => {
         const cartWithNegativePrices = [
           { price: 99.99 },
           { price: -50.00 },  // Negative price
@@ -187,7 +187,7 @@ describe('Payment Controllers', () => {
         expect(mockGateway.transaction.sale).not.toHaveBeenCalled();
       });
 
-      test('should handle non-numeric prices in cart', async () => {
+      test('should return 400 if non-numeric prices in cart', async () => {
         const cartWithInvalidPrices = [
           { price: 99.99 },
           { price: "invalid" },  // Non-numeric price
