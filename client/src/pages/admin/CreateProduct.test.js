@@ -86,7 +86,7 @@ describe("Create Product Component", () => {
       .mockResolvedValueOnce({ data: mockData }) // For getAllCategory()
 
     // Mock axios POST request
-    axios.post.mockResolvedValueOnce({ data: { message: "Category is required" } });
+    axios.post.mockRejectedValueOnce({ response: { data: { error: "Category is required" } } });
 
     render(
       <MemoryRouter initialEntries={["/dashboard/admin/create-product"]}>
