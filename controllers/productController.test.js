@@ -1,7 +1,7 @@
 // productController.test.js
 import {
   getProductController,
-  realtedProductController,
+  relatedProductController,
   productCategoryController,
   createProductController,
   deleteProductController,
@@ -1778,6 +1778,467 @@ describe('Product Controller', () => {
 
         expect(mockResponse.status).toHaveBeenCalledWith(500);
         expect(mockResponse.send).toHaveBeenCalledWith(new Error("Transaction declined"));
+      });
+    });
+  });
+
+  describe('relatedProductController', () => {
+    let req;
+    let res;
+    let mockFind;
+    let mockSelect;
+    let mockLimit;
+    let mockPopulate;
+    
+    beforeEach(() => {
+      // Reset mocks
+      jest.clearAllMocks();
+      
+      // Setup request and response objects
+      req = {
+        params: {
+          pid: '60d21b4667d0d8992e610c85', // Valid MongoDB ObjectId format
+          cid: '60d21b4667d0d8992e610c86', // Valid MongoDB ObjectId format
+        },
+      };
+      
+      res = {
+        status: jest.fn().mockReturnThis(),
+        send: jest.fn(),
+      };
+      
+      // Setup the mock chain properly
+      mockPopulate = jest.fn().mockResolvedValue([
+        { _id: '60d21b4667d0d8992e610c87', name: 'Product 1' },
+        { _id: '60d21b4667d0d8992e610c88', name: 'Product 2' },
+      ]);
+      mockLimit = jest.fn().mockReturnValue({ populate: mockPopulate });
+      mockSelect = jest.fn().mockReturnValue({ limit: mockLimit });
+      mockFind = jest.fn().mockReturnValue({ select: mockSelect });
+      
+      productModel.find = mockFind;
+    });
+
+    // Successful case - related products found
+    test('should return related products successfully', async () => {
+      await relatedProductController(req, res);
+      
+      // Verify that find was called with correct parameters
+      expect(mockFind).toHaveBeenCalledWith({
+        category: '60d21b4667d0d8992e610c86',
+        _id: { $ne: '60d21b4667d0d8992e610c85' },
+      });
+      
+      // Verify response
+      expect(res.status).toHaveBeenCalledWith(200);
+      expect(res.send).toHaveBeenCalledWith({
+        success: true,
+        products: [
+          { _id: '60d21b4667d0d8992e610c87', name: 'Product 1' },
+          { _id: '60d21b4667d0d8992e610c88', name: 'Product 2' },
+        ],
+      });
+    });
+
+    // No products found
+    test('should handle case when no related products are found', async () => {
+      // Mock empty products array
+      const emptyMockPopulate = jest.fn().mockResolvedValue([]);
+      const emptyMockLimit = jest.fn().mockReturnValue({ populate: emptyMockPopulate });
+      const emptyMockSelect = jest.fn().mockReturnValue({ limit: emptyMockLimit });
+      const emptyMockFind = jest.fn().mockReturnValue({ select: emptyMockSelect });
+      
+      productModel.find = emptyMockFind;
+      
+      await relatedProductController(req, res);
+      
+      // Verify response
+      expect(res.status).toHaveBeenCalledWith(200);
+      expect(res.send).toHaveBeenCalledWith({
+        success: true,
+        message: 'No related products found',
+        products: [],
+      });
+    });
+
+    // Missing parameters
+    test('should handle missing product ID', async () => {
+      req.params.pid = '';
+      
+      await relatedProductController(req, res);
+      
+      expect(res.status).toHaveBeenCalledWith(400);
+      expect(res.send).toHaveBeenCalledWith({
+        success: false,
+        message: 'Product ID and Category ID are required',
+      });
+    });
+
+    test('should handle missing category ID', async () => {
+      req.params.cid = '';
+      
+      await relatedProductController(req, res);
+      
+      expect(res.status).toHaveBeenCalledWith(400);
+      expect(res.send).toHaveBeenCalledWith({
+        success: false,
+        message: 'Product ID and Category ID are required',
+      });
+    });
+    
+    test('should handle undefined parameters', async () => {
+      req.params = {};
+      
+      await relatedProductController(req, res);
+      
+      expect(res.status).toHaveBeenCalledWith(400);
+      expect(res.send).toHaveBeenCalledWith({
+        success: false,
+        message: 'Product ID and Category ID are required',
+      });
+    });
+
+    // Invalid ObjectId format - Now handled as database errors
+    test('should handle invalid product ID format', async () => {
+      const castError = new Error('Cast to ObjectId failed');
+      castError.name = 'CastError';
+      castError.message = 'Invalid ObjectId';
+      
+      mockFind.mockImplementation(() => {
+        throw castError;
+      });
+      
+      await relatedProductController(req, res);
+      
+      expect(res.status).toHaveBeenCalledWith(400);
+      expect(res.send).toHaveBeenCalledWith({
+        success: false,
+        message: 'Invalid Product ID or Category ID format',
+        error: 'Invalid ObjectId',
+      });
+    });
+
+    // Database error
+    test('should handle database errors', async () => {
+      // Simulate a database error
+      const dbError = new Error('Database connection error');
+      mockFind.mockImplementation(() => {
+        throw dbError;
+      });
+      
+      await relatedProductController(req, res);
+      
+      // Verify error handling
+      expect(res.status).toHaveBeenCalledWith(500);
+      expect(res.send).toHaveBeenCalledWith({
+        success: false,
+        message: 'Error while getting related products',
+        error: dbError,
+      });
+    });
+
+    // Boundary test - exactly 3 products returned when there are exactly 3 related products
+    test('should return exactly 3 products when there are exactly 3 related products', async () => {
+      // Mock returning exactly 3 products
+      const mockThreeProducts = [
+        { _id: '60d21b4667d0d8992e610c87', name: 'Product 1' },
+        { _id: '60d21b4667d0d8992e610c88', name: 'Product 2' },
+        { _id: '60d21b4667d0d8992e610c89', name: 'Product 3' },
+      ];
+      
+      const limitMockPopulate = jest.fn().mockResolvedValue(mockThreeProducts);
+      const limitMockLimit = jest.fn().mockReturnValue({ populate: limitMockPopulate });
+      const limitMockSelect = jest.fn().mockReturnValue({ limit: limitMockLimit });
+      const limitMockFind = jest.fn().mockReturnValue({ select: limitMockSelect });
+      
+      productModel.find = limitMockFind;
+      
+      await relatedProductController(req, res);
+      
+      // Verify that limit was called with 3
+      expect(limitMockLimit).toHaveBeenCalledWith(3);
+      
+      // Verify response
+      expect(res.status).toHaveBeenCalledWith(200);
+      expect(res.send).toHaveBeenCalledWith({
+        success: true,
+        products: mockThreeProducts,
+      });
+      
+      // Verify exactly 3 products were returned
+      expect(res.send.mock.calls[0][0].products.length).toBe(3);
+    });
+
+    // Limit test - only 3 products returned when there are more than 3 related products
+    test('should return only 3 products when there are more than 3 related products', async () => {
+      // Create a scenario where the database would return 4 products,
+      // but the limit should restrict it to 3
+      const allProducts = [
+        { _id: '60d21b4667d0d8992e610c87', name: 'Product 1' },
+        { _id: '60d21b4667d0d8992e610c88', name: 'Product 2' },
+        { _id: '60d21b4667d0d8992e610c89', name: 'Product 3' },
+        { _id: '60d21b4667d0d8992e610c90', name: 'Product 4' }, // This one should be limited
+      ];
+      
+      // But the limit should restrict what's returned to the first 3
+      const limitedProducts = allProducts.slice(0, 3);
+      
+      // Mock the database response with appropriate limits
+      const mockPopulateWithLimit = jest.fn().mockImplementation(() => {
+        return Promise.resolve(limitedProducts);
+      });
+      
+      const mockLimitWithEffect = jest.fn().mockImplementation((limit) => {
+        // This simulates the actual limiting behavior
+        return {
+          populate: mockPopulateWithLimit
+        };
+      });
+      
+      const mockSelect = jest.fn().mockReturnValue({ limit: mockLimitWithEffect });
+      const mockFind = jest.fn().mockReturnValue({ select: mockSelect });
+      
+      productModel.find = mockFind;
+      
+      await relatedProductController(req, res);
+      
+      // Verify that limit was called with 3
+      expect(mockLimitWithEffect).toHaveBeenCalledWith(3);
+      
+      // Verify response
+      expect(res.status).toHaveBeenCalledWith(200);
+      expect(res.send).toHaveBeenCalledWith({
+        success: true,
+        products: limitedProducts,
+      });
+      
+      // The key test - verify only 3 products were returned even though 4 exist
+      expect(res.send.mock.calls[0][0].products.length).toBe(3);
+      expect(allProducts.length).toBe(4); // Verify we started with 4 products
+    });
+
+    // Edge case - exclude current product from related products
+    test('should exclude current product from related products', async () => {
+      // Setup mock data where one product has the same ID as the requested product
+      const currentProductId = req.params.pid;
+      const categoryId = req.params.cid;
+      
+      // Create a scenario where the database contains both the current product
+      // and other products in the same category
+      const allCategoryProducts = [
+        { _id: currentProductId, name: 'Current Product', category: categoryId },
+        { _id: '60d21b4667d0d8992e610c87', name: 'Related Product 1', category: categoryId },
+        { _id: '60d21b4667d0d8992e610c88', name: 'Related Product 2', category: categoryId },
+      ];
+      
+      // But our mocked response should only contain the related products
+      const expectedRelatedProducts = [
+        { _id: '60d21b4667d0d8992e610c87', name: 'Related Product 1', category: categoryId },
+        { _id: '60d21b4667d0d8992e610c88', name: 'Related Product 2', category: categoryId },
+      ];
+      
+      // Mock the database to return only the related products
+      const mockPopulate = jest.fn().mockResolvedValue(expectedRelatedProducts);
+      const mockLimit = jest.fn().mockReturnValue({ populate: mockPopulate });
+      const mockSelect = jest.fn().mockReturnValue({ limit: mockLimit });
+      const mockFind = jest.fn().mockReturnValue({ select: mockSelect });
+      
+      productModel.find = mockFind;
+      
+      // Call the controller
+      await relatedProductController(req, res);
+      
+      // Verify the response
+      expect(res.status).toHaveBeenCalledWith(200);
+      expect(res.send).toHaveBeenCalledWith({
+        success: true,
+        products: expectedRelatedProducts,
+      });
+      
+      // Verify the current product is not in the results
+      const productsInResponse = res.send.mock.calls[0][0].products;
+      const currentProductInResponse = productsInResponse.find(p => p._id === currentProductId);
+      expect(currentProductInResponse).toBeUndefined();
+    });
+  });
+
+  describe('productCategoryController', () => {
+    let req;
+    let res;
+    
+    beforeEach(() => {
+      // Reset mocks
+      jest.clearAllMocks();
+      
+      // Setup request and response objects
+      req = {
+        params: {
+          slug: 'test-category'
+        }
+      };
+      
+      res = {
+        status: jest.fn().mockReturnThis(),
+        send: jest.fn()
+      };
+      
+      // Mock console.log to prevent test output clutter
+      jest.spyOn(console, 'log').mockImplementation(() => {});
+    });
+    
+    // Test for successful case
+    test('should return products with category data when category exists', async () => {
+      // Arrange
+      const mockCategory = { _id: 'cat123', name: 'Test Category', slug: 'test-category' };
+      const mockProducts = [
+        { _id: 'prod1', name: 'Product 1', category: 'cat123' },
+        { _id: 'prod2', name: 'Product 2', category: 'cat123' }
+      ];
+      
+      categoryModel.findOne.mockResolvedValue(mockCategory);
+      
+      const mockFind = {
+        populate: jest.fn().mockResolvedValue(mockProducts)
+      };
+      productModel.find.mockReturnValue(mockFind);
+      
+      // Act
+      await productCategoryController(req, res);
+      
+      // Assert - verify status code and data
+      expect(res.status).toHaveBeenCalledWith(200);
+      expect(res.send).toHaveBeenCalledWith({
+        success: true,
+        category: mockCategory,
+        products: mockProducts
+      });
+    });
+    
+    // Test for empty products array (but valid category)
+    test('should return empty products array when category exists but has no products', async () => {
+      // Arrange
+      const mockCategory = { _id: 'cat123', name: 'Test Category', slug: 'test-category' };
+      const mockProducts = [];
+      
+      categoryModel.findOne.mockResolvedValue(mockCategory);
+      
+      const mockFind = {
+        populate: jest.fn().mockResolvedValue(mockProducts)
+      };
+      productModel.find.mockReturnValue(mockFind);
+      
+      // Act
+      await productCategoryController(req, res);
+      
+      // Assert - verify empty products array is returned
+      expect(res.status).toHaveBeenCalledWith(200);
+      expect(res.send).toHaveBeenCalledWith({
+        success: true,
+        category: mockCategory,
+        products: []
+      });
+    });
+    
+    // Test for category not found
+    test('should return 404 status when category does not exist', async () => {
+      // Arrange
+      categoryModel.findOne.mockResolvedValue(null);
+      
+      // Act
+      await productCategoryController(req, res);
+      
+      // Assert - verify exact response for category not found
+      expect(res.status).toHaveBeenCalledWith(404);
+      expect(res.send).toHaveBeenCalledWith({
+        success: false,
+        message: "Category not found"
+      });
+    });
+    
+    // Test for missing slug parameter
+    test('should return 400 status when slug parameter is missing', async () => {
+      // Arrange
+      req.params = {}; // Empty params, no slug
+      
+      // Act
+      await productCategoryController(req, res);
+      
+      // Assert - verify exact response for missing slug
+      expect(res.status).toHaveBeenCalledWith(400);
+      expect(res.send).toHaveBeenCalledWith({
+        success: false,
+        message: "Category slug is required"
+      });
+    });
+    
+    // Test for database error
+    test('should return error status when database operation fails', async () => {
+      // Arrange
+      const mockError = new Error('Database error');
+      categoryModel.findOne.mockRejectedValue(mockError);
+      
+      // Act
+      await productCategoryController(req, res);
+      
+      // Assert - verify error response includes the actual error
+      expect(res.status).toHaveBeenCalledWith(500); // 500 for server errors
+      expect(res.send).toHaveBeenCalledWith({
+        success: false,
+        error: mockError,
+        message: "Error while getting products"
+      });
+    });
+    
+    // Test for invalid category ID (CastError)
+    test('should return 400 status when category ID format is invalid', async () => {
+      // Arrange
+      const mockError = new mongoose.Error.CastError('ObjectId', 'invalid-id', 'path');
+      categoryModel.findOne.mockRejectedValue(mockError);
+      
+      // Act
+      await productCategoryController(req, res);
+      
+      // Assert - verify 400 status and error response
+      expect(res.status).toHaveBeenCalledWith(400);
+      expect(res.send).toHaveBeenCalledWith({
+        success: false,
+        error: mockError,
+        message: "Error while getting products"
+      });
+    });
+    
+    // Boundary test: very long slug
+    test('should handle very long slug parameter appropriately', async () => {
+      // Arrange
+      const veryLongSlug = 'a'.repeat(1000); // 1000 character slug
+      req.params.slug = veryLongSlug;
+      
+      categoryModel.findOne.mockResolvedValue(null);
+      
+      // Act
+      await productCategoryController(req, res);
+      
+      // Assert - verify correct response even with extreme input
+      expect(res.status).toHaveBeenCalledWith(404);
+      expect(res.send).toHaveBeenCalledWith({
+        success: false,
+        message: "Category not found"
+      });
+    });
+
+    // Boundary tests: Empty string and special character slugs
+    test('should handle empty string slug parameter', async () => {
+      // Arrange
+      req.params.slug = ''; // Empty string slug
+      
+      // Act
+      await productCategoryController(req, res);
+      
+      // Assert - empty string should be treated as missing slug
+      expect(res.status).toHaveBeenCalledWith(400);
+      expect(res.send).toHaveBeenCalledWith({
+        success: false,
+        message: "Category slug is required"
       });
     });
   });

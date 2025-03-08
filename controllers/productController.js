@@ -346,9 +346,18 @@ export const searchProductController = async (req, res) => {
 };
 
 // similar products
-export const realtedProductController = async (req, res) => {
+export const relatedProductController = async (req, res) => {
   try {
     const { pid, cid } = req.params;
+
+    // Validate required parameters
+    if (!pid || !cid) {
+      return res.status(400).send({
+        success: false,
+        message: "Product ID and Category ID are required",
+      });
+    }
+
     const products = await productModel
       .find({
         category: cid,
@@ -357,25 +366,62 @@ export const realtedProductController = async (req, res) => {
       .select("-photo")
       .limit(3)
       .populate("category");
+
+    // Handle case when no products found
+    if (!products || products.length === 0) {
+      return res.status(200).send({
+        success: true,
+        message: "No related products found",
+        products: [],
+      });
+    }
+
     res.status(200).send({
       success: true,
       products,
     });
   } catch (error) {
-    console.log(error);
-    res.status(400).send({
+    console.error(error);
+
+    // Check if it's a CastError (invalid ObjectId)
+    if (error.name === 'CastError') {
+      return res.status(400).send({
+        success: false,
+        message: "Invalid Product ID or Category ID format",
+        error: error.message,
+      });
+    }
+
+    res.status(500).send({ // Changed from 400 to 500 for server errors
       success: false,
-      message: "error while geting related product",
+      message: "Error while getting related products",
       error,
     });
   }
 };
 
-// get prdocyst by catgory
+// get product by catgory
 export const productCategoryController = async (req, res) => {
   try {
+    if (!req.params.slug) {
+      return res.status(400).send({
+        success: false,
+        message: "Category slug is required",
+      });
+    }
+
     const category = await categoryModel.findOne({ slug: req.params.slug });
+
+    // Check if category exists
+    if (!category) {
+      return res.status(404).send({
+        success: false,
+        message: "Category not found",
+      });
+    }
+
     const products = await productModel.find({ category }).populate("category");
+
     res.status(200).send({
       success: true,
       category,
@@ -383,10 +429,13 @@ export const productCategoryController = async (req, res) => {
     });
   } catch (error) {
     console.log(error);
-    res.status(400).send({
+
+    const statusCode = error.name === 'CastError' ? 400 : 500;
+
+    res.status(statusCode).send({
       success: false,
       error,
-      message: "Error While Getting products",
+      message: "Error while getting products",
     });
   }
 };
