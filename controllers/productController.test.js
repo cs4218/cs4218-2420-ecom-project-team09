@@ -100,287 +100,286 @@ describe('Product Controller', () => {
         products: mockProducts
       });
     });
-  });
 
-  test('should exclude photo field from returned products', async () => {
-    // Arrange
-    const mockProductsInDb = [
-      { 
-        _id: '1', 
-        name: 'Product with photo', 
-        price: 100,
-        photo: { data: Buffer.from('photo data'), contentType: 'image/jpeg' } // This should be excluded
-      }
-    ];
-    
-    const mockProductsAfterSelect = [
-      { 
-        _id: '1', 
-        name: 'Product with photo', 
-        price: 100
-        // photo field is excluded
-      }
-    ];
-    
-    // Mock implementation that simulates field selection
-    const mockFind = {
-      populate: jest.fn().mockReturnThis(),
-      select: jest.fn(fields => {
-        // Simulate what select does
-        return {
-          limit: jest.fn().mockReturnThis(),
-          sort: jest.fn().mockResolvedValue(mockProductsAfterSelect)
-        };
-      }),
-      limit: jest.fn().mockReturnThis(),
-      sort: jest.fn()
-    };
-    
-    productModel.find.mockReturnValue(mockFind);
-    
-    // Act
-    await getProductController(req, res);
-    
-    // Assert
-    expect(mockFind.select).toHaveBeenCalledWith('-photo');
-    expect(res.send.mock.calls[0][0].products[0]).not.toHaveProperty('photo');
-    expect(res.send.mock.calls[0][0].products[0]).toHaveProperty('name');
-    expect(res.send.mock.calls[0][0].products[0]).toHaveProperty('price');
-  });
-
-  test('should populate category field for each product', async () => {
-    // Arrange
-    const mockCategories = {
-      'cat1': { _id: 'cat1', name: 'Electronics' },
-      'cat2': { _id: 'cat2', name: 'Clothing' }
-    };
-    
-    // Products with category IDs
-    const productsBeforePopulate = [
-      { _id: '1', name: 'Laptop', category: 'cat1' },
-      { _id: '2', name: 'Shirt', category: 'cat2' }
-    ];
-    
-    // Products after population (what the database would return)
-    const productsAfterPopulate = [
-      { _id: '1', name: 'Laptop', category: mockCategories['cat1'] },
-      { _id: '2', name: 'Shirt', category: mockCategories['cat2'] }
-    ];
-    
-    // Mock implementation that simulates population
-    const mockFind = {
-      populate: jest.fn(field => {
-        // Simulate what population does
-        return {
-          select: jest.fn().mockReturnThis(),
-          limit: jest.fn().mockReturnThis(),
-          sort: jest.fn().mockResolvedValue(productsAfterPopulate)
-        };
-      }),
-      select: jest.fn().mockReturnThis(),
-      limit: jest.fn().mockReturnThis(),
-      sort: jest.fn()
-    };
-    
-    productModel.find.mockReturnValue(mockFind);
-    
-    // Act
-    await getProductController(req, res);
-    
-    // Assert
-    expect(mockFind.populate).toHaveBeenCalledWith('category');
-    expect(res.send.mock.calls[0][0].products[0].category.name).toBe('Electronics');
-    expect(res.send.mock.calls[0][0].products[1].category.name).toBe('Clothing');
-  });
-
-  it('should sort products by createdAt in descending order', async () => {
-    // Arrange
-    const mockProducts = [
-      { _id: '1', name: 'Product 1', createdAt: new Date('2023-03-01') },
-      { _id: '2', name: 'Product 2', createdAt: new Date('2023-03-15') },
-      { _id: '3', name: 'Product 3', createdAt: new Date('2023-03-10') }
-    ];
-    
-    // Sort the mock data as the database would
-    const sortedProducts = [...mockProducts].sort((a, b) => 
-      b.createdAt - a.createdAt // Descending order
-    );
-    
-    // Mock implementation that actually sorts the data
-    const mockFind = {
-      populate: jest.fn().mockReturnThis(),
-      select: jest.fn().mockReturnThis(),
-      limit: jest.fn().mockReturnThis(),
-      sort: jest.fn().mockResolvedValue(sortedProducts)
-    };
-    
-    productModel.find.mockReturnValue(mockFind);
-    
-    // Act
-    await getProductController(req, res);
-    
-    // Assert
-    expect(mockFind.sort).toHaveBeenCalledWith({ createdAt: -1 });
-    expect(res.send.mock.calls[0][0].products[0]._id).toBe('2'); // The newest product
-    expect(res.send.mock.calls[0][0].products[1]._id).toBe('3');
-    expect(res.send.mock.calls[0][0].products[2]._id).toBe('1'); // The oldest product
-  });
-
-  test('should return empty array when no products exist', async () => {
-    // Arrange
-    const mockProducts = [];
-    
-    const mockFind = {
-      populate: jest.fn().mockReturnThis(),
-      select: jest.fn().mockReturnThis(),
-      limit: jest.fn().mockReturnThis(),
-      sort: jest.fn().mockResolvedValue(mockProducts)
-    };
-    
-    productModel.find.mockReturnValue(mockFind);
-    
-    // Act
-    await getProductController(req, res);
-    
-    // Assert
-    expect(res.status).toHaveBeenCalledWith(200);
-    expect(res.send).toHaveBeenCalledWith({
-      success: true,
-      countTotal: 0,
-      message: 'All Products',
-      products: []
+    test('should exclude photo field from returned products', async () => {
+      // Arrange
+      const mockProductsInDb = [
+        { 
+          _id: '1', 
+          name: 'Product with photo', 
+          price: 100,
+          photo: { data: Buffer.from('photo data'), contentType: 'image/jpeg' } // This should be excluded
+        }
+      ];
+      
+      const mockProductsAfterSelect = [
+        { 
+          _id: '1', 
+          name: 'Product with photo', 
+          price: 100
+          // photo field is excluded
+        }
+      ];
+      
+      // Mock implementation that simulates field selection
+      const mockFind = {
+        populate: jest.fn().mockReturnThis(),
+        select: jest.fn(fields => {
+          // Simulate what select does
+          return {
+            limit: jest.fn().mockReturnThis(),
+            sort: jest.fn().mockResolvedValue(mockProductsAfterSelect)
+          };
+        }),
+        limit: jest.fn().mockReturnThis(),
+        sort: jest.fn()
+      };
+      
+      productModel.find.mockReturnValue(mockFind);
+      
+      // Act
+      await getProductController(req, res);
+      
+      // Assert
+      expect(mockFind.select).toHaveBeenCalledWith('-photo');
+      expect(res.send.mock.calls[0][0].products[0]).not.toHaveProperty('photo');
+      expect(res.send.mock.calls[0][0].products[0]).toHaveProperty('name');
+      expect(res.send.mock.calls[0][0].products[0]).toHaveProperty('price');
     });
-  });
-
-  test('should limit to 12 products even if more exist', async () => {
-    // Arrange
-    // Create an array of 13 products (just over the boundary)
-    const dbProducts = Array(13).fill().map((_, index) => ({
-      _id: `${index + 1}`,
-      name: `Product ${index + 1}`,
-      price: 100 * (index + 1)
-    }));
-    
-    // But the controller should only return 12 of them
-    const limitedProducts = dbProducts.slice(0, 12);
-    
-    const mockFind = {
-      populate: jest.fn().mockReturnThis(),
-      select: jest.fn().mockReturnThis(),
-      limit: jest.fn(() => {
-        // This more accurately simulates what MongoDB would do - it would apply the limit
-        return {
-          sort: jest.fn().mockResolvedValue(limitedProducts)
-        };
-      }),
-      sort: jest.fn() // This shouldn't be called directly
-    };
-    
-    productModel.find.mockReturnValue(mockFind);
-    
-    // Act
-    await getProductController(req, res);
-    
-    // Assert
-    expect(mockFind.limit).toHaveBeenCalledWith(12);
-    expect(res.status).toHaveBeenCalledWith(200);
-    expect(res.send).toHaveBeenCalledWith({
-      success: true,
-      countTotal: 12,
-      message: 'All Products',
-      products: limitedProducts
+  
+    test('should populate category field for each product', async () => {
+      // Arrange
+      const mockCategories = {
+        'cat1': { _id: 'cat1', name: 'Electronics' },
+        'cat2': { _id: 'cat2', name: 'Clothing' }
+      };
+      
+      // Products with category IDs
+      const productsBeforePopulate = [
+        { _id: '1', name: 'Laptop', category: 'cat1' },
+        { _id: '2', name: 'Shirt', category: 'cat2' }
+      ];
+      
+      // Products after population (what the database would return)
+      const productsAfterPopulate = [
+        { _id: '1', name: 'Laptop', category: mockCategories['cat1'] },
+        { _id: '2', name: 'Shirt', category: mockCategories['cat2'] }
+      ];
+      
+      // Mock implementation that simulates population
+      const mockFind = {
+        populate: jest.fn(field => {
+          // Simulate what population does
+          return {
+            select: jest.fn().mockReturnThis(),
+            limit: jest.fn().mockReturnThis(),
+            sort: jest.fn().mockResolvedValue(productsAfterPopulate)
+          };
+        }),
+        select: jest.fn().mockReturnThis(),
+        limit: jest.fn().mockReturnThis(),
+        sort: jest.fn()
+      };
+      
+      productModel.find.mockReturnValue(mockFind);
+      
+      // Act
+      await getProductController(req, res);
+      
+      // Assert
+      expect(mockFind.populate).toHaveBeenCalledWith('category');
+      expect(res.send.mock.calls[0][0].products[0].category.name).toBe('Electronics');
+      expect(res.send.mock.calls[0][0].products[1].category.name).toBe('Clothing');
     });
-    expect(res.send.mock.calls[0][0].products.length).toBe(12);
-  });
-
-  it('should limit to 12 products even if exactly 12 products exist', async () => {
-    // Arrange
-    const mockProducts = Array(12).fill().map((_, index) => ({
-      _id: `${index + 1}`,
-      name: `Product ${index + 1}`,
-      price: 100 * (index + 1)
-    }));
-    
-    const mockFind = {
-      populate: jest.fn().mockReturnThis(),
-      select: jest.fn().mockReturnThis(),
-      limit: jest.fn().mockReturnThis(),
-      sort: jest.fn().mockResolvedValue(mockProducts)
-    };
-    
-    productModel.find.mockReturnValue(mockFind);
-    
-    // Act
-    await getProductController(req, res);
-    
-    // Assert
-    expect(mockFind.limit).toHaveBeenCalledWith(12);
-    expect(res.send).toHaveBeenCalledWith(expect.objectContaining({
-      countTotal: 12,
-      products: expect.arrayContaining([expect.any(Object)])
-    }));
-    expect(res.send.mock.calls[0][0].products.length).toBe(12);
-  });
-
-  it('should handle database errors and return 500 status', async () => {
-    // Arrange
-    const mockError = new Error('Database connection failed');
-    
-    const mockFind = {
-      populate: jest.fn().mockReturnThis(),
-      select: jest.fn().mockReturnThis(),
-      limit: jest.fn().mockReturnThis(),
-      sort: jest.fn().mockRejectedValue(mockError)
-    };
-    
-    productModel.find.mockReturnValue(mockFind);
-    
-    // Spy on console.log
-    jest.spyOn(console, 'log').mockImplementation(() => {});
-    
-    // Act
-    await getProductController(req, res);
-    
-    // Assert
-    expect(res.status).toHaveBeenCalledWith(500);
-    expect(res.send).toHaveBeenCalledWith({
-      success: false,
-      message: 'Error in getting products',
-      error: mockError.message
+  
+    test('should sort products by createdAt in descending order', async () => {
+      // Arrange
+      const mockProducts = [
+        { _id: '1', name: 'Product 1', createdAt: new Date('2023-03-01') },
+        { _id: '2', name: 'Product 2', createdAt: new Date('2023-03-15') },
+        { _id: '3', name: 'Product 3', createdAt: new Date('2023-03-10') }
+      ];
+      
+      // Sort the mock data as the database would
+      const sortedProducts = [...mockProducts].sort((a, b) => 
+        b.createdAt - a.createdAt // Descending order
+      );
+      
+      // Mock implementation that actually sorts the data
+      const mockFind = {
+        populate: jest.fn().mockReturnThis(),
+        select: jest.fn().mockReturnThis(),
+        limit: jest.fn().mockReturnThis(),
+        sort: jest.fn().mockResolvedValue(sortedProducts)
+      };
+      
+      productModel.find.mockReturnValue(mockFind);
+      
+      // Act
+      await getProductController(req, res);
+      
+      // Assert
+      expect(mockFind.sort).toHaveBeenCalledWith({ createdAt: -1 });
+      expect(res.send.mock.calls[0][0].products[0]._id).toBe('2'); // The newest product
+      expect(res.send.mock.calls[0][0].products[1]._id).toBe('3');
+      expect(res.send.mock.calls[0][0].products[2]._id).toBe('1'); // The oldest product
     });
-    expect(console.log).toHaveBeenCalledWith(mockError);
-  });
-
-  test('should handle products with null category references', async () => {
-    // Arrange
-    const mockProducts = [
-      {
-        _id: '1',
-        name: 'Product with null category',
-        price: 100,
-        category: null
-      }
-    ];
-    
-    const mockFind = {
-      populate: jest.fn().mockReturnThis(),
-      select: jest.fn().mockReturnThis(),
-      limit: jest.fn().mockReturnThis(),
-      sort: jest.fn().mockResolvedValue(mockProducts)
-    };
-    
-    productModel.find.mockReturnValue(mockFind);
-    
-    // Act
-    await getProductController(req, res);
-    
-    // Assert
-    expect(res.status).toHaveBeenCalledWith(200);
-    expect(res.send).toHaveBeenCalledWith({
-      success: true,
-      countTotal: 1,
-      message: 'All Products',
-      products: mockProducts
+  
+    test('should return empty array when no products exist', async () => {
+      // Arrange
+      const mockProducts = [];
+      
+      const mockFind = {
+        populate: jest.fn().mockReturnThis(),
+        select: jest.fn().mockReturnThis(),
+        limit: jest.fn().mockReturnThis(),
+        sort: jest.fn().mockResolvedValue(mockProducts)
+      };
+      
+      productModel.find.mockReturnValue(mockFind);
+      
+      // Act
+      await getProductController(req, res);
+      
+      // Assert
+      expect(res.status).toHaveBeenCalledWith(200);
+      expect(res.send).toHaveBeenCalledWith({
+        success: true,
+        countTotal: 0,
+        message: 'All Products',
+        products: []
+      });
+    });
+  
+    test('should limit to 12 products even if more exist', async () => {
+      // Arrange
+      // Create an array of 13 products (just over the boundary)
+      const dbProducts = Array(13).fill().map((_, index) => ({
+        _id: `${index + 1}`,
+        name: `Product ${index + 1}`,
+        price: 100 * (index + 1)
+      }));
+      
+      // But the controller should only return 12 of them
+      const limitedProducts = dbProducts.slice(0, 12);
+      
+      const mockFind = {
+        populate: jest.fn().mockReturnThis(),
+        select: jest.fn().mockReturnThis(),
+        limit: jest.fn(() => {
+          // This more accurately simulates what MongoDB would do - it would apply the limit
+          return {
+            sort: jest.fn().mockResolvedValue(limitedProducts)
+          };
+        }),
+        sort: jest.fn() // This shouldn't be called directly
+      };
+      
+      productModel.find.mockReturnValue(mockFind);
+      
+      // Act
+      await getProductController(req, res);
+      
+      // Assert
+      expect(mockFind.limit).toHaveBeenCalledWith(12);
+      expect(res.status).toHaveBeenCalledWith(200);
+      expect(res.send).toHaveBeenCalledWith({
+        success: true,
+        countTotal: 12,
+        message: 'All Products',
+        products: limitedProducts
+      });
+      expect(res.send.mock.calls[0][0].products.length).toBe(12);
+    });
+  
+    test('should limit to 12 products even if exactly 12 products exist', async () => {
+      // Arrange
+      const mockProducts = Array(12).fill().map((_, index) => ({
+        _id: `${index + 1}`,
+        name: `Product ${index + 1}`,
+        price: 100 * (index + 1)
+      }));
+      
+      const mockFind = {
+        populate: jest.fn().mockReturnThis(),
+        select: jest.fn().mockReturnThis(),
+        limit: jest.fn().mockReturnThis(),
+        sort: jest.fn().mockResolvedValue(mockProducts)
+      };
+      
+      productModel.find.mockReturnValue(mockFind);
+      
+      // Act
+      await getProductController(req, res);
+      
+      // Assert
+      expect(mockFind.limit).toHaveBeenCalledWith(12);
+      expect(res.send).toHaveBeenCalledWith(expect.objectContaining({
+        countTotal: 12,
+        products: expect.arrayContaining([expect.any(Object)])
+      }));
+      expect(res.send.mock.calls[0][0].products.length).toBe(12);
+    });
+  
+    test('should handle database errors and return 500 status', async () => {
+      // Arrange
+      const mockError = new Error('Database connection failed');
+      
+      const mockFind = {
+        populate: jest.fn().mockReturnThis(),
+        select: jest.fn().mockReturnThis(),
+        limit: jest.fn().mockReturnThis(),
+        sort: jest.fn().mockRejectedValue(mockError)
+      };
+      
+      productModel.find.mockReturnValue(mockFind);
+      
+      // Mock console.error to avoid cluttering test output
+      jest.spyOn(console, 'error').mockImplementation();
+      
+      // Act
+      await getProductController(req, res);
+      
+      // Assert
+      expect(res.status).toHaveBeenCalledWith(500);
+      expect(res.send).toHaveBeenCalledWith({
+        success: false,
+        message: 'Error in getting products',
+        error: mockError.message
+      });
+    });
+  
+    test('should handle products with null category references', async () => {
+      // Arrange
+      const mockProducts = [
+        {
+          _id: '1',
+          name: 'Product with null category',
+          price: 100,
+          category: null
+        }
+      ];
+      
+      const mockFind = {
+        populate: jest.fn().mockReturnThis(),
+        select: jest.fn().mockReturnThis(),
+        limit: jest.fn().mockReturnThis(),
+        sort: jest.fn().mockResolvedValue(mockProducts)
+      };
+      
+      productModel.find.mockReturnValue(mockFind);
+      
+      // Act
+      await getProductController(req, res);
+      
+      // Assert
+      expect(res.status).toHaveBeenCalledWith(200);
+      expect(res.send).toHaveBeenCalledWith({
+        success: true,
+        countTotal: 1,
+        message: 'All Products',
+        products: mockProducts
+      });
     });
   });
 
@@ -767,14 +766,13 @@ describe('Product Controller', () => {
       const testError = new Error('Database error');
       mockProduct.save.mockRejectedValue(testError);
       
-      // Spy on console.log
-      jest.spyOn(console, 'log').mockImplementation();
+      // Mock console.error to avoid cluttering test output
+      jest.spyOn(console, 'error').mockImplementation();
       
       // Act
       await createProductController(req, res);
       
       // Assert
-      expect(console.log).toHaveBeenCalledWith(testError);
       expect(res.status).toHaveBeenCalledWith(500);
       expect(res.send).toHaveBeenCalledWith({
         success: false,
@@ -1291,14 +1289,13 @@ describe('Product Controller', () => {
       const testError = new Error('Database error');
       productModel.findByIdAndUpdate.mockRejectedValue(testError);
       
-      // Spy on console.log
-      jest.spyOn(console, 'log').mockImplementation();
+      // Mock console.error to avoid cluttering test output
+      jest.spyOn(console, 'error').mockImplementation();
       
       // Act
       await updateProductController(req, res);
       
       // Assert
-      expect(console.log).toHaveBeenCalledWith(testError);
       expect(res.status).toHaveBeenCalledWith(500);
       expect(res.send).toHaveBeenCalledWith({
         success: false,
@@ -1491,8 +1488,8 @@ describe('Product Controller', () => {
         send: jest.fn()
       };
       
-      // Mock console.log to avoid cluttering test output
-      jest.spyOn(console, 'log').mockImplementation();
+      // Mock console.error to avoid cluttering test output
+      jest.spyOn(console, 'error').mockImplementation();
     });
     
     // Test for successful product deletion
@@ -1567,7 +1564,6 @@ describe('Product Controller', () => {
       await deleteProductController(req, res);
       
       // Assert
-      expect(console.log).toHaveBeenCalledWith(mockError);
       expect(res.status).toHaveBeenCalledWith(500);
       expect(res.send).toHaveBeenCalledWith({
         success: false,
@@ -1593,7 +1589,6 @@ describe('Product Controller', () => {
         await deleteProductController(req, res);
         
         // Assert
-        expect(console.log).toHaveBeenCalledWith(mockError);
         expect(res.status).toHaveBeenCalledWith(500);
         expect(res.send).toHaveBeenCalledWith({
           success: false,

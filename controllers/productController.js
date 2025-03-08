@@ -62,7 +62,7 @@ export const createProductController = async (req, res) => {
       products,
     });
   } catch (error) {
-    console.log(error);
+    console.error(error);
     res.status(500).send({
       success: false,
       error,
@@ -88,7 +88,7 @@ export const getProductController = async (req, res) => {
       products,
     });
   } catch (error) {
-    console.log(error);
+    console.error(error);
     res.status(500).send({
       success: false,
       message: "Error in getting products", // Fixed typo: changed "Erorr" to "Error"
@@ -162,7 +162,7 @@ export const deleteProductController = async (req, res) => {
       message: "Product Deleted successfully",
     });
   } catch (error) {
-    console.log(error);
+    console.error(error);
     res.status(500).send({
       success: false,
       message: "Error while deleting product",
@@ -248,7 +248,7 @@ export const updateProductController = async (req, res) => {
       throw updateError;
     }
   } catch (error) {
-    console.log(error);
+    console.error(error);
     res.status(500).send({
       success: false,
       error,
