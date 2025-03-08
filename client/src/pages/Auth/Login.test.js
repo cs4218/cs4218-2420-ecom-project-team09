@@ -31,6 +31,8 @@ jest.mock('../../context/search', () => ({
     writable: true,
   });
 
+jest.mock("../../hooks/useCategory", () => jest.fn(() => []));
+
 window.matchMedia = window.matchMedia || function() {
     return {
       matches: false,
