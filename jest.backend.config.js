@@ -6,6 +6,7 @@ export default {
   testEnvironment: "node",
 
   // which test to run
+<<<<<<< HEAD
   testMatch: [
     "<rootDir>/controllers/*.test.js",
     "<rootDir>/helpers/*.test.js",
@@ -23,6 +24,17 @@ export default {
     global: {
       lines: 100,
       functions: 100,
+=======
+  testMatch: ["<rootDir>/controllers/**/*.test.js"],
+
+  // jest code coverage
+  collectCoverage: true,
+  collectCoverageFrom: ["controllers/**"],
+  coverageThreshold: {
+    global: {
+      lines: 0,
+      functions: 0,
+>>>>>>> main
     },
   },
 };
