@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "ecommerce rest api",
   "main": "server.js",
+  "type": "module",
   "scripts": {
     "start": "node server.js",
     "server": "nodemon server.js",
@@ -48,6 +49,15 @@
     "sonarqube-scanner": "^3.3.0"
   },
   "jest": {
-    "testEnvironment": "jsdom"
+    "testEnvironment": "jest-environment-jsdom",
+    "transform": {
+      "^.+\\.jsx?$": "babel-jest"
+    },
+    "moduleNameMapper": {
+      "\\.(css|scss)$": "identity-obj-proxy"
+    },
+    "transformIgnorePatterns": [
+      "/node_modules/(?!(styleMock\\.js)$)"
+    ]
   }
 }
