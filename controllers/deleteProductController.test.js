@@ -103,7 +103,7 @@ describe('deleteProductController', () => {
     });
   });
   
-  describe('should return 400 status for invalid product ID', () => {
+  describe('Invalid Product ID', () => {
     // Test for invalid product ID format
     test('should handle invalid product ID format', async () => {
       // Arrange

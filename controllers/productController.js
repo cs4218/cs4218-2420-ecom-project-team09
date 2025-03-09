@@ -171,7 +171,7 @@ export const deleteProductController = async (req, res) => {
       return res.status(400).send({
         success: false,
         message: "Invalid Product ID format",
-        error: error.message,
+        error,
       });
     }
 

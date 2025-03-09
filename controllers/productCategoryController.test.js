@@ -177,7 +177,7 @@ describe('productCategoryController', () => {
     expect(res.send).toHaveBeenCalledWith({
       success: false,
       error: castError,
-      message: 'Error while getting products'
+      message: 'Invalid Category slug'
     });
     expect(consoleLogSpy).toHaveBeenCalled();
   });
