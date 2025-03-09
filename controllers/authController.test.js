@@ -11,6 +11,7 @@ import userModel from "../models/userModel.js";
 import orderModel from "../models/orderModel.js";
 import mockingoose from 'mockingoose';
 import mongoose from "mongoose";
+import { hashPassword } from '../helpers/authHelper.js';
 
 let req, res;
 
@@ -20,17 +21,18 @@ beforeEach(() => {
         send: jest.fn(),
     }
     
-    mockingoose(userModel).toReturn(null, 'findOne');
-    mockingoose(userModel).toReturn(null, 'save');
-    mockingoose(userModel).toReturn(null, 'findById');
-    mockingoose(orderModel).toReturn(null, 'findByIdAndUpdate');
+    jest.spyOn(userModel, 'findOne').mockImplementation(() => Promise.resolve(null));
+    jest.spyOn(userModel.prototype, 'save').mockImplementation(() => Promise.resolve(null));
+    jest.spyOn(userModel, 'findById').mockImplementation(() => Promise.resolve(null));
+    jest.spyOn(orderModel, 'findByIdAndUpdate').mockImplementation(() => Promise.resolve(null));
 })
 
 const mockUser = {
     _id: new mongoose.Types.ObjectId(),
     name: "John Doe",
     email: "john@doe.com",
-    password: "password",
+    password: await hashPassword("password"),
+    plain_password: "password",
     phone: "1234567890",
     address: {
         street: "123 Main St",
@@ -45,7 +47,8 @@ const mockUser2 = {
     _id: new mongoose.Types.ObjectId(),
     name: "Jane Doe",
     email: "jane@doe.com",
-    password: "password2",
+    password: await hashPassword("password2"),
+    plain_password: "password2",
     phone: "1234567891",
     address: {
         street: "123 Side St",
@@ -59,7 +62,6 @@ const mockUser2 = {
 describe("test registerController", () => {
 
     beforeEach(() => {
-        mockingoose.resetAll();
         req = {
             body: { ...mockUser } // deep copy
         }
@@ -141,11 +143,8 @@ describe("test registerController", () => {
     })
 
     it ("User already exists (409 Conflict)", async () => {
-        console.log("User already exists (409 Conflict)");
         req.body.email = mockUser.email;
-        mockingoose(userModel).toReturn(mockUser, "findOne");
-        console.log(await userModel.findOne({ email: req.body.email }));
-
+        jest.spyOn(userModel, 'findOne').mockImplementation(() => Promise.resolve(mockUser));
         await registerController(req, res);
         expect(res.status).toHaveBeenCalledWith(409);
         expect(res.send).toHaveBeenCalledWith(expect.objectContaining({
@@ -157,11 +156,10 @@ describe("test registerController", () => {
 describe("test loginController", () => {
     
     beforeEach(() => {
-        mockingoose.resetAll();
         req = {
             body: {
                 email: mockUser.email,
-                password: mockUser.password,
+                password: mockUser.plain_password,
             }
         }
     })
@@ -171,7 +169,7 @@ describe("test loginController", () => {
     })
 
     it("Login successful (200 OK)", async () => {
-        mockingoose(userModel).toReturn(mockUser);
+        jest.spyOn(userModel, 'findOne').mockImplementation(() => Promise.resolve(mockUser));
         await loginController(req, res);
         expect(res.status).toHaveBeenCalledWith(200);
         expect(res.send).toHaveBeenCalledWith(expect.objectContaining({
@@ -198,8 +196,7 @@ describe("test loginController", () => {
     })
 
     it("User not registered (401 Unauthorized)", async () => {
-        console.log("No password provided (401 Unauthorized)");
-        mockingoose(userModel).toReturn(null, 'findOne');
+        jest.spyOn(userModel, 'findOne').mockImplementation(() => Promise.resolve(null));
         await loginController(req, res);
         expect(res.status).toHaveBeenCalledWith(401);
         expect(res.send).toHaveBeenCalledWith(expect.objectContaining({
@@ -220,7 +217,6 @@ describe("test loginController", () => {
 describe("test forgotPasswordController", () => {
     const newPassword = "newPassword";
     beforeEach(() => {
-        mockingoose.resetAll();
         req = {
             body: {
                 email: mockUser.email,
@@ -262,7 +258,7 @@ describe("test forgotPasswordController", () => {
     })
 
     it ("Wrong email or answer (401 Unauthorized)", async () => {
-        mockingoose(userModel).toReturn(null);
+        jest.spyOn(userModel, 'findOne').mockImplementation(() => Promise.resolve(null));
         await forgotPasswordController(req, res);
         expect(res.status).toHaveBeenCalledWith(401);
         expect(res.send).toHaveBeenCalledWith(expect.objectContaining({
@@ -271,6 +267,9 @@ describe("test forgotPasswordController", () => {
     })
 
     it ("Password reset successfully (200 OK)", async () => {
+        jest.spyOn(userModel, 'findOne').mockImplementation(() => Promise.resolve(mockUser));
+        jest.spyOn(userModel, 'findByIdAndUpdate').mockImplementation(() => Promise.resolve(mockUser));
+        
         await forgotPasswordController(req, res);
         expect(res.status).toHaveBeenCalledWith(200);
         expect(res.send).toHaveBeenCalledWith(expect.objectContaining({
@@ -292,7 +291,6 @@ describe("test testController", () => {
 
 describe("test updateProfileController", () => {
     beforeEach(() => {
-        mockingoose.resetAll();
         req = {
             body: {
                 name: mockUser.name,
@@ -333,13 +331,15 @@ describe("test updateProfileController", () => {
     it ("Empty request body (except password) does not change anything", async () => {
         req.body = {};
         req.body.password = mockUser.password;
+        jest.spyOn(userModel, 'findById').mockImplementation(() => Promise.resolve(mockUser));
+        jest.spyOn(userModel, 'findByIdAndUpdate').mockImplementation((oldDoc, newDoc) => Promise.resolve(newDoc));
         await updateProfileController(req, res);
         expect(res.status).toHaveBeenCalledWith(200);
         expect(res.send).toHaveBeenCalledWith(expect.objectContaining({
             success: true,
         }));
         const expectedUpdate = {...mockUser, password: "hashedPassword"};
-        expect(mockingoose(userModel).toReturn(expectedUpdate, 'findByIdAndUpdate')).toBeTruthy();
+        jest.spyOn(userModel, 'findByIdAndUpdate').mockImplementation(() => Promise.resolve(expectedUpdate));
     })
 
     it ("Update profile with the same details (200 OK)", async () => {
@@ -350,19 +350,19 @@ describe("test updateProfileController", () => {
             success: true,
         }));
         const expectedUpdate = {...mockUser, password: "hashedPassword"};
-        expect(mockingoose(userModel).toReturn(expectedUpdate, 'findByIdAndUpdate')).toBeTruthy();
+        jest.spyOn(userModel, 'findByIdAndUpdate').mockImplementation(() => Promise.resolve(expectedUpdate));
     })
 
     it ("Update profile successfully (200 OK)", async () => {
         req.body = { ...mockUser2 };
-        mockingoose(userModel).toReturn(mockUser, "findById");
+        jest.spyOn(userModel, 'findById').mockImplementation(() => Promise.resolve(mockUser));
         await updateProfileController(req, res);
         expect(res.status).toHaveBeenCalledWith(200);
         expect(res.send).toHaveBeenCalledWith(expect.objectContaining({
             success: true,
         }));
         const expectedUpdate = {...mockUser2, password: "hashedPassword"};
-        expect(mockingoose(userModel).toReturn(expectedUpdate, 'findByIdAndUpdate')).toBeTruthy();
+        jest.spyOn(userModel, 'findByIdAndUpdate').mockImplementation(() => Promise.resolve(expectedUpdate));
     })
 })
 
@@ -376,7 +376,6 @@ this will just be a wrapper around the mocks, so this is not tested.
 
 describe("test orderStatusController", () => {
     beforeEach(() => {
-        mockingoose.resetAll();
         req = {
             params: {
                 orderId: "123",
@@ -416,6 +415,6 @@ describe("test orderStatusController", () => {
             success: true,
         }));
         const expectedOrderUpdate = {status: "delivered"};
-        expect(mockingoose(orderModel).toReturn(expectedOrderUpdate, 'findByIdAndUpdate')).toBeTruthy();
+        jest.spyOn(orderModel, 'findByIdAndUpdate').mockImplementation(() => Promise.resolve(expectedOrderUpdate));
     })
 })
