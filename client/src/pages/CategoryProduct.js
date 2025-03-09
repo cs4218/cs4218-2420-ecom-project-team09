@@ -3,16 +3,20 @@ import Layout from "../components/Layout";
 import { useParams, useNavigate } from "react-router-dom";
 import "../styles/CategoryProductStyles.css";
 import axios from "axios";
+import { useCart } from "../context/cart";  
+import toast from "react-hot-toast";  
+
 const CategoryProduct = () => {
   const params = useParams();
   const navigate = useNavigate();
   const [products, setProducts] = useState([]);
   const [category, setCategory] = useState([]);
+  const [cart, setCart] = useCart();  
 
   useEffect(() => {
-    if (params?.slug) getPrductsByCat();
+    if (params?.slug) getProductsByCat();
   }, [params?.slug]);
-  const getPrductsByCat = async () => {
+  const getProductsByCat = async () => {
     try {
       const { data } = await axios.get(
         `/api/v1/product/product-category/${params.slug}`
@@ -59,19 +63,19 @@ const CategoryProduct = () => {
                       >
                         More Details
                       </button>
-                      {/* <button
+                      <button
                     className="btn btn-dark ms-1"
                     onClick={() => {
-                      setCart([...cart, p]);
-                      localStorage.setItem(
-                        "cart",
-                        JSON.stringify([...cart, p])
-                      );
-                      toast.success("Item Added to cart");
+                          setCart([...cart, p]);
+                          localStorage.setItem(
+                            "cart", 
+                            JSON.stringify([...cart, p])
+                          );
+                          toast.success("Item Added to cart");  
                     }}
                   >
                     ADD TO CART
-                  </button> */}
+                      </button>
                     </div>
                   </div>
                 </div>
