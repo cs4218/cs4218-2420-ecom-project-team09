@@ -534,8 +534,6 @@ describe('Product Controller', () => {
       );
     });
 
-    updateProductController
-
     describe('string field validation', () => {
       const stringFields = ['name', 'description'];
       
