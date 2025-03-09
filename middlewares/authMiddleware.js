@@ -1,4 +1,4 @@
-import JWT, { TokenExpiredError } from "jsonwebtoken";
+import JWT from "jsonwebtoken";
 import userModel from "../models/userModel.js";
 
 // Protected routes token base
