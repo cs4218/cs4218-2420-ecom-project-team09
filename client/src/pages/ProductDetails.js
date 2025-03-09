@@ -2,11 +2,14 @@ import React, { useState, useEffect } from "react";
 import Layout from "./../components/Layout";
 import axios from "axios";
 import { useParams, useNavigate } from "react-router-dom";
+import { useCart } from "../context/cart"; // 
+import toast from "react-hot-toast"; 
 import "../styles/ProductDetailsStyles.css";
 
 const ProductDetails = () => {
   const params = useParams();
   const navigate = useNavigate();
+  const [cart, setCart] = useCart(); 
   const [product, setProduct] = useState({});
   const [relatedProducts, setRelatedProducts] = useState([]);
 
@@ -41,13 +44,15 @@ const ProductDetails = () => {
     <Layout>
       <div className="row container product-details">
         <div className="col-md-6">
-          <img
+          {product._id && (
+            <img
             src={`/api/v1/product/product-photo/${product._id}`}
             className="card-img-top"
             alt={product.name}
             height="300"
             width={"350px"}
           />
+          )}
         </div>
         <div className="col-md-6 product-details-info">
           <h1 className="text-center">Product Details</h1>
@@ -62,7 +67,17 @@ const ProductDetails = () => {
             })}
           </h6>
           <h6>Category : {product?.category?.name}</h6>
-          <button class="btn btn-secondary ms-1">ADD TO CART</button>
+          <button
+            className="btn btn-secondary ms-1"
+            data-testid="current-product-add-to-cart"
+            onClick={() => {
+              setCart([...cart, product]);
+              localStorage.setItem("cart", JSON.stringify([...cart, product]));
+              toast.success("Item Added to cart");
+            }}
+          >
+            ADD TO CART
+          </button>
         </div>
       </div>
       <hr />
@@ -99,19 +114,17 @@ const ProductDetails = () => {
                   >
                     More Details
                   </button>
-                  {/* <button
+                  <button
                   className="btn btn-dark ms-1"
+                  data-testid="similar-product-add-to-cart"
                   onClick={() => {
                     setCart([...cart, p]);
-                    localStorage.setItem(
-                      "cart",
-                      JSON.stringify([...cart, p])
-                    );
+                      localStorage.setItem("cart", JSON.stringify([...cart, p]));
                     toast.success("Item Added to cart");
                   }}
                 >
                   ADD TO CART
-                </button> */}
+                  </button>
                 </div>
               </div>
             </div>
