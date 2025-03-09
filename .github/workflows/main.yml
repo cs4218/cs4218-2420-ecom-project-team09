@@ -33,4 +33,4 @@ jobs:
         run: npm run test:frontend
 
       - name: Run backend tests
-        run: npm run test:backend
+        run: set -a && . .env && set +a && npm run test:backend

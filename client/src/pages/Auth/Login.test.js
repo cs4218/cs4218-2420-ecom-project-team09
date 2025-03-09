@@ -6,6 +6,7 @@ import '@testing-library/jest-dom/extend-expect';
 import toast from 'react-hot-toast';
 import Login from './Login';
 
+jest.mock('../../hooks/useCategory');
 // Mocking axios.post
 jest.mock('axios');
 jest.mock('react-hot-toast');
@@ -44,6 +45,8 @@ window.matchMedia = window.matchMedia || function() {
 describe('Login Component', () => {
     beforeEach(() => {
         jest.clearAllMocks();
+        toast.success.mockImplementation(() => {});
+        toast.error.mockImplementation(() => {});
     });
 
     it('renders login form', () => {
