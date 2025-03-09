@@ -4,7 +4,6 @@ import '@testing-library/jest-dom/extend-expect';
 import Orders from './Orders';
 import axios, { AxiosError } from 'axios';
 import { useAuth, AuthProvider } from '../../context/auth';
-import moment from 'moment';
 
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
 jest.mock('axios');
@@ -83,6 +82,21 @@ describe('Orders Component', () => {
     expect(screen.getByText('a few seconds ago')).toBeInTheDocument();
     expect(screen.getByText('Success')).toBeInTheDocument();
     expect(screen.getByText('Product 1')).toBeInTheDocument();
+  });
+
+  it('does not fetch orders when auth token is empty', async () => {
+    useAuth.mockReturnValue([{ token: '' }, jest.fn()]);
+    axios.get.mockResolvedValueOnce({ data: [] });
+
+    render(
+        <MemoryRouter initialEntries={['/dashboard/user/orders']}>
+            <Routes>
+                <Route path="/dashboard/user/orders" element={<Orders />} />
+            </Routes>
+        </MemoryRouter>
+    );
+
+    expect(axios.get).not.toHaveBeenCalled()
   });
 
   it('handles API errors gracefully', async () => {
