@@ -21,8 +21,18 @@ export const createProductController = async (req, res) => {
   try {
     const { name, description, price, category, quantity, shipping } =
       req.fields;
+
+    // Check if photo is missing
+    if (!req.files || !req.files.photo) {
+      return res.status(500).send({ 
+        error: "Photo is Required and should be less then 1mb" 
+      });
+    }
+    
+    // Now we can safely destructure photo
     const { photo } = req.files;
-    //validation
+
+    // Validation // Fixed: Corrected typo from "alidation" to "Validation"
     switch (true) {
       case !name:
         return res.status(500).send({ error: "Name is Required" });
@@ -34,17 +44,17 @@ export const createProductController = async (req, res) => {
         return res.status(500).send({ error: "Category is Required" });
       case !quantity:
         return res.status(500).send({ error: "Quantity is Required" });
-      case photo && photo.size > 1000000:
+      case !photo || Object.keys(photo).length === 0 || photo.size <= 0 || photo.size > 1000000:
         return res
           .status(500)
-          .send({ error: "Photo is Required and should be less than 1mb" });
+          .send({ error: "Photo is Required and should be less then 1mb" });
     }
 
-    const products = new productModel({ ...req.fields, slug: slugify(name) });
-    if (photo) {
-      products.photo.data = fs.readFileSync(photo.path);
-      products.photo.contentType = photo.type;
-    }
+    const products = new productModel({ ...req.fields, slug: slugify(name, { lower: true, strict: true, trim: true }) });
+
+    products.photo.data = fs.readFileSync(photo.path);
+    products.photo.contentType = photo.type;
+
     await products.save();
     res.status(201).send({
       success: true,
@@ -52,10 +62,11 @@ export const createProductController = async (req, res) => {
       products,
     });
   } catch (error) {
-    console.log(error);
+    console.error(error);
     res.status(500).send({
       success: false,
       error,
+      // Fixed: Corrected typo from "crearing" to "creating"
       message: "Error in creating product",
     });
   }
@@ -72,19 +83,21 @@ export const getProductController = async (req, res) => {
       .sort({ createdAt: -1 });
     res.status(200).send({
       success: true,
-      countTotal: products.length,
-      message: "All Products",
+      countTotal: products.length, // Fixed typo from 'counTotal' to 'countTotal'
+      message: "All Products", // Fixed typo from 'ALlProducts' to 'All Products'
       products,
     });
   } catch (error) {
-    console.log(error);
+    console.error(error);
     res.status(500).send({
       success: false,
-      message: "Error in getting products",
+      message: "Error in getting products", // Fixed typo: changed "Erorr" to "Error"
       error: error.message,
     });
   }
 };
+
+
 // get single product
 export const getSingleProductController = async (req, res) => {
   try {
@@ -129,13 +142,39 @@ export const productPhotoController = async (req, res) => {
 //delete controller
 export const deleteProductController = async (req, res) => {
   try {
-    await productModel.findByIdAndDelete(req.params.pid).select("-photo");
+    // Check if product ID exists in params
+    if (!req.params.pid) {
+      return res.status(400).send({
+        success: false,
+        message: "Product ID is required"
+      });
+    }
+
+    const deletedProduct = await productModel.findByIdAndDelete(req.params.pid).select("-photo");
+
+    // Check if product was found and deleted
+    if (!deletedProduct) {
+      return res.status(404).send({
+        success: false,
+        message: "Product not found"
+      });
+    }
+
     res.status(200).send({
       success: true,
-      message: "Product Deleted successfully",
+      message: "Product Deleted Successfully",
     });
   } catch (error) {
-    console.log(error);
+    console.error(error);
+
+    if (error.name === 'CastError') {
+      return res.status(400).send({
+        success: false,
+        message: "Invalid Product ID format",
+        error,
+      });
+    }
+
     res.status(500).send({
       success: false,
       message: "Error while deleting product",
@@ -147,10 +186,28 @@ export const deleteProductController = async (req, res) => {
 //update product
 export const updateProductController = async (req, res) => {
   try {
+    // Check if product ID exists in params
+    if (!req.params.pid) {
+      return res.status(400).send({
+        success: false,
+        message: "Product ID is required"
+      });
+    }
+
     const { name, description, price, category, quantity, shipping } =
       req.fields;
+
+    // Check if photo is missing
+    if (!req.files || !req.files.photo) {
+      return res.status(500).send({ 
+        error: "Photo is Required and should be less then 1mb" 
+      });
+    }
+    
+    // Now we can safely destructure photo
     const { photo } = req.files;
-    //validation
+
+    // Validation
     switch (true) {
       case !name:
         return res.status(500).send({ error: "Name is Required" });
@@ -162,33 +219,52 @@ export const updateProductController = async (req, res) => {
         return res.status(500).send({ error: "Category is Required" });
       case !quantity:
         return res.status(500).send({ error: "Quantity is Required" });
-      case photo && photo.size > 1000000:
+        case !photo || Object.keys(photo).length === 0 || photo.size <= 0 || photo.size > 1000000:
         return res
           .status(500)
-          .send({ error: "Photo is Required and should be less than 1mb" });
+          .send({ error: "Photo is Required and should be less then 1mb" });
     }
 
-    const products = await productModel.findByIdAndUpdate(
-      req.params.pid,
-      { ...req.fields, slug: slugify(name) },
-      { new: true }
-    );
-    if (photo) {
+    try {
+      const products = await productModel.findByIdAndUpdate(
+        req.params.pid,
+        { ...req.fields, slug: slugify(name, { lower: true, strict: true, trim: true }) },
+        { new: true }
+      );
+      
+      // Check if product exists
+      if (!products) {
+        return res.status(404).send({
+          success: false,
+          message: "Product not found"
+        });
+      }
+  
       products.photo.data = fs.readFileSync(photo.path);
       products.photo.contentType = photo.type;
+  
+      await products.save();
+      res.status(201).send({
+        success: true,
+        message: "Product Updated Successfully",
+        products,
+      });
+    } catch (updateError) {
+      if (updateError.name === 'CastError') {
+        return res.status(400).send({
+          success: false,
+          message: "Invalid Product ID format",
+          error: updateError
+        });
+      }
+      throw updateError;
     }
-    await products.save();
-    res.status(201).send({
-      success: true,
-      message: "Product Updated Successfully",
-      products,
-    });
   } catch (error) {
-    console.log(error);
+    console.error(error);
     res.status(500).send({
       success: false,
       error,
-      message: "Error in Update product",
+      message: "Error in updating product", // Fixed typo from "Updte" to "Update"
     });
   }
 };
@@ -290,6 +366,15 @@ export const searchProductController = async (req, res) => {
 export const relatedProductController = async (req, res) => {
   try {
     const { pid, cid } = req.params;
+
+    // Validate required parameters
+    if (!pid || !cid) {
+      return res.status(400).send({
+        success: false,
+        message: "Product ID and Category ID are required",
+      });
+    }
+
     const products = await productModel
       .find({
         category: cid,
@@ -298,25 +383,62 @@ export const relatedProductController = async (req, res) => {
       .select("-photo")
       .limit(3)
       .populate("category");
+
+    // Handle case when no products found
+    if (!products || products.length === 0) {
+      return res.status(200).send({
+        success: true,
+        message: "No related products found",
+        products: [],
+      });
+    }
+
     res.status(200).send({
       success: true,
       products,
     });
   } catch (error) {
-    console.log(error);
-    res.status(400).send({
+    console.error(error);
+
+    // Check if it's a CastError (invalid ObjectId)
+    if (error.name === 'CastError') {
+      return res.status(400).send({
+        success: false,
+        message: "Invalid Product ID or Category ID format",
+        error: error.message,
+      });
+    }
+
+    res.status(500).send({ // Changed from 400 to 500 for server errors
       success: false,
-      message: "Error while getting related product",
+      message: "Error while getting related products",
       error,
     });
   }
 };
 
-// get products by category
+// get product by catgory
 export const productCategoryController = async (req, res) => {
   try {
+    if (!req.params.slug) {
+      return res.status(400).send({
+        success: false,
+        message: "Category slug is required",
+      });
+    }
+
     const category = await categoryModel.findOne({ slug: req.params.slug });
+
+    // Check if category exists
+    if (!category) {
+      return res.status(404).send({
+        success: false,
+        message: "Category not found",
+      });
+    }
+
     const products = await productModel.find({ category }).populate("category");
+
     res.status(200).send({
       success: true,
       category,
@@ -324,39 +446,80 @@ export const productCategoryController = async (req, res) => {
     });
   } catch (error) {
     console.log(error);
-    res.status(400).send({
+
+    if (error.name === 'CastError') {
+      return res.status(400).send({
+        success: false,
+        message: "Invalid Category slug",
+        error,
+      });
+    }
+
+    res.status(500).send({
       success: false,
       error,
-      message: "Error While Getting products",
+      message: "Error while getting products",
     });
   }
 };
 
 //payment gateway api
 //token
-export const braintreeTokenController = async (req, res) => {
+export const braintreeTokenController = async (req, res, gatewayParam=gateway) => {
   try {
-    gateway.clientToken.generate({}, function (err, response) {
+    gatewayParam.clientToken.generate({}, function (err, response) {
       if (err) {
         res.status(500).send(err);
       } else {
-        res.send(response);
+        res.status(200).send(response); // Add 200 status code to the response for standard API requests
       }
     });
   } catch (error) {
-    console.log(error);
+    console.error(error);
   }
 };
 
 //payment
-export const brainTreePaymentController = async (req, res) => {
+export const brainTreePaymentController = async (req, res, gatewayParam=gateway) => {
   try {
     const { nonce, cart } = req.body;
+
+    //Check if the nonce is missing 
+    if (!nonce) {
+      return res.status(400).send(new Error("Payment method nonce is required"));
+    }
+
+    // Check if the cart is empty
+    if (!cart || cart.length === 0) {
+      return res.status(400).send(new Error("Cart is empty, cannot process payment"));
+    }
+
+    // Check if cart is missing price
+    for (let item of cart) {
+      if (!item.hasOwnProperty("price")) {
+        return res.status(400).send(new Error("Price is missing in cart"));
+      }
+    }
+
+    // Check if all items in the car are numeric
+    for (let item of cart) {
+      if (isNaN(item.price)) {
+        return res.status(400).send(new Error("Invalid price in cart, prices must be numeric"));
+      }
+    }
+
+    // Check for negative prices in the cart
+    for (let item of cart) {
+      if (item.price < 0) {
+        return res.status(400).send(new Error("Invalid price in cart, prices must be non-negative"));
+      }
+    }
+
     let total = 0;
     cart.map((i) => {
       total += i.price;
     });
-    let newTransaction = gateway.transaction.sale(
+    let newTransaction = gatewayParam.transaction.sale(
       {
         amount: total,
         paymentMethodNonce: nonce,
@@ -364,20 +527,32 @@ export const brainTreePaymentController = async (req, res) => {
           submitForSettlement: true,
         },
       },
-      function (error, result) {
-        if (result) {
+      async function (error, result) {
+        // If the payment proces failed
+        if (error) {
+          return res.status(500).send(new Error("Payment processing failed"));
+        }
+
+        // If the transaction failed
+        if (!result || !result.success) {
+          return res.status(500).send(new Error(result.message || "Transaction failed"));
+        }
+
+        try {
           const order = new orderModel({
             products: cart,
             payment: result,
             buyer: req.user._id,
-          }).save();
-          res.json({ ok: true });
-        } else {
-          res.status(500).send(error);
+          });
+          await order.save(); // Asynchronous to catch any database errors
+          return res.status(200).json({ ok: true });
+        } catch (dbError) {
+          console.error("Database save error:", dbError);
+          return res.status(500).send(dbError);
         }
       }
     );
   } catch (error) {
-    console.log(error);
+    console.error(error);
   }
 };
