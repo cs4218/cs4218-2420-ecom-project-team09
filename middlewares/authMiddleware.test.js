@@ -1,23 +1,20 @@
 // authMiddleware.test.js
+import { jest } from '@jest/globals';
 import { requireSignIn, isAdmin } from '../middlewares/authMiddleware.js';
 import JWT from 'jsonwebtoken';
 import userModel from '../models/userModel.js';
-
-// Mocking dependencies
-jest.mock('jsonwebtoken');
-jest.mock('../models/userModel.js');
 
 describe('Auth Middleware Tests', () => {
   // Store original console.error
   const originalConsoleError = console.error;
   
-  beforeEach(() => {
+  beforeAll(() => {
     // Replace with silent mock for tests
     console.error = jest.fn();
   });
   
-  afterEach(() => {
-    // Restore original after each test
+  afterAll(() => {
+    // Restore original after all tests
     console.error = originalConsoleError;
   });
 
@@ -46,6 +43,10 @@ describe('Auth Middleware Tests', () => {
     
     // Mock environment variable
     process.env.JWT_SECRET = 'test_secret';
+    
+    // Setup spies on JWT and userModel
+    jest.spyOn(JWT, 'verify');
+    jest.spyOn(userModel, 'findById');
   });
 
   // ======= requireSignIn tests =======
