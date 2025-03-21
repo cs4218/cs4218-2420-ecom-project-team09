@@ -149,27 +149,31 @@ export const forgotPasswordController = async(req, res) => {
                 success: false,
                 message: "Email is required"
             });
+            return;
         }
         if (!answer) {
             res.status(400).send({
                 success: false,
                 message: "Answer is required"
             });
+            return;
         }
         if (!newPassword) {
             res.status(400).send({ 
                 success: false,
                 message: "New Password is required" 
             });
+            return;
         }
         //check
         const user = await userModel.findOne({ email, answer });
         //validation
         if (!user) {
-            return res.status(401).send({
+            res.status(401).send({
                 success: false,
                 message: "Wrong Email Or Answer",
             });
+            return;
         }
         const hashed = await hashPassword(newPassword);
         await userModel.findByIdAndUpdate(user._id, { password: hashed });
@@ -177,6 +181,7 @@ export const forgotPasswordController = async(req, res) => {
             success: true,
             message: "Password Reset Successfully",
         });
+        return;
     } catch (error) {
         console.log(error);
         res.status(500).send({
@@ -265,7 +270,7 @@ export const getAllOrdersController = async(req, res) => {
         console.log(error);
         res.status(500).send({
             success: false,
-            message: "Error WHile Geting Orders",
+            message: "Error While Getting Orders",
             error,
         });
     }

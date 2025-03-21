@@ -1,5 +1,5 @@
 import { jest } from '@jest/globals';
-import { braintreeTokenController, brainTreePaymentController } from '../controllers/productController.js';
+import { braintreeTokenController, brainTreePaymentController } from './productController.js';
 import orderModel from '../models/orderModel.js';
 import braintree from 'braintree';
 import mockingoose from 'mockingoose';
@@ -49,15 +49,15 @@ describe('Product Payment Controllers', () => {
   describe('braintreeTokenController', () => {
     test('should generate client token successfully', async () => {
       // Setup mock implementation for generate
-      gateway.clientToken.generate.mockImplementation((options, callback) => {
-        callback(null, { clientToken: 'test-client-token' });
+      gateway.clientToken.generate.mockImplementation(async () => {
+        return { clientToken: 'test-client-token' };
       });
       
       // Act
-      await braintreeTokenController(req, res, gateway);
+      await braintreeTokenController(gateway)(req, res);
       
-      // Assert
-      expect(gateway.clientToken.generate).toHaveBeenCalledWith({}, expect.any(Function));
+      // Assert 
+      expect(gateway.clientToken.generate).toHaveBeenCalledWith({});
       expect(res.status).toHaveBeenCalledWith(200);
       expect(res.send).toHaveBeenCalledWith({ clientToken: 'test-client-token' });
     });
@@ -65,15 +65,15 @@ describe('Product Payment Controllers', () => {
     test('should return 500 if token generation error', async () => {
       // Setup mock implementation for generate with error
       const mockError = new Error('Token generation failed');
-      gateway.clientToken.generate.mockImplementation((options, callback) => {
-        callback(mockError, null);
+      gateway.clientToken.generate.mockImplementation(async (options) => {
+        throw mockError;
       });
       
       // Act
-      await braintreeTokenController(req, res, gateway);
+      await braintreeTokenController(gateway)(req, res);
       
       // Assert
-      expect(gateway.clientToken.generate).toHaveBeenCalledWith({}, expect.any(Function));
+      expect(gateway.clientToken.generate).toHaveBeenCalledWith({});
       expect(res.status).toHaveBeenCalledWith(500);
       expect(res.send).toHaveBeenCalledWith(mockError);
     });
@@ -108,7 +108,7 @@ describe('Product Payment Controllers', () => {
       jest.spyOn(orderModel.prototype, 'save').mockImplementation(mockSave);
       
       // Act
-      await brainTreePaymentController(req, res, gateway);
+      await brainTreePaymentController(gateway)(req, res);
       
       // Assert
       expect(gateway.transaction.sale).toHaveBeenCalledWith({
@@ -133,7 +133,7 @@ describe('Product Payment Controllers', () => {
       });
       
       // Act
-      await brainTreePaymentController(req, res, gateway);
+      await brainTreePaymentController(gateway)(req, res);
       
       // Assert
       expect(gateway.transaction.sale).toHaveBeenCalled();
@@ -164,7 +164,7 @@ describe('Product Payment Controllers', () => {
       jest.spyOn(orderModel.prototype, 'save').mockImplementation(mockSave);
       
       // Act
-      await brainTreePaymentController(req, res, gateway);
+      await brainTreePaymentController(gateway)(req, res);
       
       // Implicitly verified in the mock implementation above
     });
@@ -181,7 +181,7 @@ describe('Product Payment Controllers', () => {
       req.body.cart = cartWithNegativePrices;
       
       // Act
-      await brainTreePaymentController(req, res, gateway);
+      await brainTreePaymentController(gateway)(req, res);
       
       // Assert
       expect(res.status).toHaveBeenCalledWith(400);
@@ -207,7 +207,7 @@ describe('Product Payment Controllers', () => {
       req.body.cart = cartWithInvalidPrices;
       
       // Act
-      await brainTreePaymentController(req, res, gateway);
+      await brainTreePaymentController(gateway)(req, res);
       
       // Assert
       expect(res.status).toHaveBeenCalledWith(400);
@@ -232,7 +232,7 @@ describe('Product Payment Controllers', () => {
       req.body.cart = cartWithMissingPrice;
       
       // Act
-      await brainTreePaymentController(req, res, gateway);
+      await brainTreePaymentController(gateway)(req, res);
       
       // Assert
       expect(res.status).toHaveBeenCalledWith(400);
@@ -251,7 +251,7 @@ describe('Product Payment Controllers', () => {
       req.body.cart = [];
       
       // Act
-      await brainTreePaymentController(req, res, gateway);
+      await brainTreePaymentController(gateway)(req, res);
       
       // Assert
       expect(res.status).toHaveBeenCalledWith(400);
@@ -270,7 +270,7 @@ describe('Product Payment Controllers', () => {
       delete req.body.nonce;
       
       // Act
-      await brainTreePaymentController(req, res, gateway);
+      await brainTreePaymentController(gateway)(req, res);
       
       // Assert
       expect(res.status).toHaveBeenCalledWith(400);
@@ -300,7 +300,7 @@ describe('Product Payment Controllers', () => {
       jest.spyOn(orderModel.prototype, 'save').mockRejectedValue(databaseSaveError);
       
       // Act
-      await brainTreePaymentController(req, res, gateway);
+      await brainTreePaymentController(gateway)(req, res);
       
       // Assert
       expect(res.status).toHaveBeenCalledWith(500);
@@ -319,7 +319,7 @@ describe('Product Payment Controllers', () => {
       });
       
       // Act
-      await brainTreePaymentController(req, res, gateway);
+      await brainTreePaymentController(gateway)(req, res);
       
       // Assert
       expect(res.status).toHaveBeenCalledWith(500);
@@ -349,7 +349,7 @@ describe('Product Payment Controllers', () => {
       mockingoose(orderModel).toReturn(mockOrder, 'save');
       
       // Act
-      await brainTreePaymentController(req, res, gateway);
+      await brainTreePaymentController(gateway)(req, res);
       
       // Assert
       expect(res.json).toHaveBeenCalledWith({ ok: true });

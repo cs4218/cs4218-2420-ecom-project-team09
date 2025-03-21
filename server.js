@@ -34,6 +34,16 @@ app.get('/', (req,res) => {
 
 const PORT = process.env.PORT || 6060;
 
-app.listen(PORT, () => {
-    console.log(`Server running on ${process.env.DEV_MODE} mode on ${PORT}`.bgCyan.white);
-});
+// This allows us to spawn multiple instances of the app without port conflicts.
+// Prevents app from automatically listening on port 6060, whenever imported.
+const hasListeners = app._router && app._router.stack.some(
+    layer => layer.route || layer.name === 'bound dispatch'
+);
+
+if (!hasListeners) {
+    app.listen(PORT, () => {
+        console.log(`Server running on ${process.env.DEV_MODE} mode on ${PORT}`.bgCyan.white);
+    });
+}
+
+export default app;
