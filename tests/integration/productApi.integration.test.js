@@ -12,7 +12,7 @@ import { fileURLToPath } from 'url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
-describe('E-commerce API Integration Tests', () => {
+describe('Product Integration Tests', () => {
     let mongoServer;
     let adminToken;
 
@@ -75,6 +75,7 @@ describe('E-commerce API Integration Tests', () => {
           shipping: "Yes",
         };
 
+        // client sends a POST request to create a product
         const res = await request(app)
           .post("/api/v1/product/create-product")
           .set("Authorization", `Bearer ${adminToken}`)
@@ -85,6 +86,7 @@ describe('E-commerce API Integration Tests', () => {
           .field("quantity", mockProduct.quantity)
           .field("shipping", mockProduct.shipping);
     
+        // server should respond with an error message
         expect(res.status).toBe(500);
         expect(res.body.error).toBe("Photo is Required and should be less then 1mb");
     });
@@ -101,6 +103,7 @@ describe('E-commerce API Integration Tests', () => {
             photo: path.resolve(__dirname, '../ui-tests/galaxy.jpeg')
         };
 
+        // client sends a POST request to create a product
         const res = await request(app)
             .post("/api/v1/product/create-product")
             .set("Authorization", `Bearer ${adminToken}`)
@@ -112,6 +115,7 @@ describe('E-commerce API Integration Tests', () => {
             .field("shipping", mockProduct.shipping)
             .attach("photo", mockProduct.photo); 
 
+        // server should respond with a success message
         expect(res.status).toBe(201);
         expect(res.body.success).toBe(true);
         expect(res.body.message).toBe("Product Created Successfully");
@@ -131,6 +135,7 @@ describe('E-commerce API Integration Tests', () => {
             photo: path.resolve(__dirname, '../ui-tests/galaxy.jpeg')
         };
 
+        // client sends a POST request to create a product
         await request(app)
             .post("/api/v1/product/create-product")
             .set("Authorization", `Bearer ${adminToken}`)
@@ -142,7 +147,10 @@ describe('E-commerce API Integration Tests', () => {
             .field("shipping", mockProduct.shipping)
             .attach("photo", mockProduct.photo);
             
+        // client sends a GET request to get all products
         const res = await request(app).get("/api/v1/product/get-product");
+
+        // server should respond with a success message
         expect(res.status).toBe(200);
         expect(res.body.products.length).toBe(1);
         expect(res.body.products[0].name).toBe(mockProduct.name);
