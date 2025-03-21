@@ -226,6 +226,8 @@ export const updateProductController = async (req, res) => {
         return res.status(500).send({ error: "Price is Required" });
       case !category:
         return res.status(500).send({ error: "Category is Required" });
+      case !shipping:
+        return res.status(500).send({ error: "Shipping is Required" });
       case !quantity:
         return res.status(500).send({ error: "Quantity is Required" });
       case !photo ||
