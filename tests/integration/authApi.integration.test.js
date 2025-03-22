@@ -1,6 +1,6 @@
 import request from 'supertest';
-import app from '../server.js'
-import userModel from '../models/userModel.js';
+import app from '../../server.js'
+import userModel from '../../models/userModel.js';
 
 let server;
 
