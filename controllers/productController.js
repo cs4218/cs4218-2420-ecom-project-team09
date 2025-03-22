@@ -489,7 +489,11 @@ export const braintreeTokenController = (braintreeGateway = gateway) => {
       return res.status(200).send(response); // Send 200 status code for successful response
     } catch (error) {
       console.error(error);
-      return res.status(500).send(error); // Send 500 status code for errors
+      return res.status(500).send({
+        success: false,
+        message: "Error generating Braintree token",
+        error: error.message,
+      });
     }
   };
 };
@@ -504,42 +508,48 @@ export const brainTreePaymentController = (
 
       // Check if the nonce is missing
       if (!nonce) {
-        return res
-          .status(400)
-          .send(new Error("Payment method nonce is required"));
+        return res.status(400).send({
+          success: false,
+          message: "Payment method nonce is required",
+        });
       }
 
       // Check if the cart is empty
       if (!cart || cart.length === 0) {
-        return res
-          .status(400)
-          .send(new Error("Cart is empty, cannot process payment"));
+        return res.status(400).send({
+          success: false,
+          message: "Cart is empty, cannot process payment",
+        });
       }
 
       // Check if cart is missing price
       for (let item of cart) {
+        console.log(item, item.hasOwnProperty("price"))
         if (!item.hasOwnProperty("price")) {
-          return res.status(400).send(new Error("Price is missing in cart"));
+          return res.status(400).send({
+            success: false,
+            message: "Price is missing in cart",
+          });
         }
       }
 
       // Check if all items in the cart are numeric
       for (let item of cart) {
         if (isNaN(item.price)) {
-          return res
-            .status(400)
-            .send(new Error("Invalid price in cart, prices must be numeric"));
+          return res.status(400).send({
+            success: false,
+            message: "Invalid price in cart, prices must be numeric",
+          });
         }
       }
 
       // Check for negative prices in the cart
       for (let item of cart) {
         if (item.price < 0) {
-          return res
-            .status(400)
-            .send(
-              new Error("Invalid price in cart, prices must be non-negative")
-            );
+          return res.status(400).send({
+            success: false,
+            message: "Invalid price in cart, prices must be non-negative",
+          });
         }
       }
 
@@ -556,16 +566,21 @@ export const brainTreePaymentController = (
           },
         },
         async function (error, result) {
-          // If the payment proces failed
+          // If the payment process failed
           if (error) {
-            return res.status(500).send(new Error("Payment processing failed"));
+            return res.status(500).send({
+              success: false,
+              message: "Payment processing failed",
+              error: error.message,
+            });
           }
 
           // If the transaction failed
           if (!result || !result.success) {
-            return res
-              .status(500)
-              .send(new Error(result.message || "Transaction failed"));
+            return res.status(500).send({
+              success: false,
+              message: result.message || "Transaction failed",
+            });
           }
 
           try {
@@ -575,15 +590,24 @@ export const brainTreePaymentController = (
               buyer: req.user._id,
             });
             await order.save(); // Asynchronous to catch any database errors
-            return res.status(200).json({ ok: true });
+            return res.status(200).send({ ok: true });
           } catch (dbError) {
             console.error("Database save error:", dbError);
-            return res.status(500).send(dbError);
+            return res.status(500).send({
+              success: false,
+              message: "Error saving order to database",
+              error: dbError.message,
+            });
           }
         }
       );
     } catch (error) {
       console.error(error);
+      return res.status(500).send({ 
+        success: false,
+        message: "Unexpected error occurred",
+        error: error.message,
+      });
     }
   };
 };

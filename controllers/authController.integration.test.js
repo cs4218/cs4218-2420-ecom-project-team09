@@ -14,14 +14,14 @@ afterAll((done) => {
     });
 });
 
-// Clear the database before each test
+// Clear the specific user before each test
 beforeEach(async () => {
-    await userModel.deleteMany({});
+    await userModel.deleteMany({ email: 'authController_integration@example.com' });
 });
 
 describe('User Registration', () => {
     beforeEach(async () => {
-        await userModel.deleteMany({});
+        await userModel.deleteMany({ email: 'authController_integration@example.com' });
     });
 
     it('should register a user with valid details', async () => {
@@ -29,7 +29,7 @@ describe('User Registration', () => {
             .post('/api/v1/auth/register')
             .send({
                 name: 'John Doe',
-                email: 'john@example.com',
+                email: 'authController_integration@example.com',
                 password: 'password123',
                 phone: '1234567890',
                 address: '123 Main St',
@@ -38,10 +38,10 @@ describe('User Registration', () => {
         expect(response.status).toBe(201);
         expect(response.body.success).toBe(true);
         expect(response.body.message).toBe('User Register Successfully');
-        const user = await userModel.findOne({ email: 'john@example.com' });
+        const user = await userModel.findOne({ email: 'authController_integration@example.com' });
         expect(user).not.toBeNull();
         expect(user.name).toBe('John Doe');
-        expect(user.email).toBe('john@example.com');
+        expect(user.email).toBe('authController_integration@example.com');
         expect(user.phone).toBe('1234567890');
         expect(user.address).toBe('123 Main St');
         expect(user.answer).toBe('blue');
@@ -52,7 +52,7 @@ describe('User Registration', () => {
             .post('/api/v1/auth/register')
             .send({
                 name: '',
-                email: 'john@example.com',
+                email: 'authController_integration@example.com',
                 password: 'password123',
                 phone: '1234567890',
                 address: '123 Main St',
@@ -84,7 +84,7 @@ describe('User Registration', () => {
             .post('/api/v1/auth/register')
             .send({
                 name: 'John Doe',
-                email: 'john@example.com',
+                email: 'authController_integration@example.com',
                 password: '',
                 phone: '1234567890',
                 address: '123 Main St',
@@ -100,7 +100,7 @@ describe('User Registration', () => {
             .post('/api/v1/auth/register')
             .send({
                 name: 'John Doe',
-                email: 'john@example.com',
+                email: 'authController_integration@example.com',
                 password: 'password123',
                 phone: '',
                 address: '123 Main St',
@@ -116,7 +116,7 @@ describe('User Registration', () => {
             .post('/api/v1/auth/register')
             .send({
                 name: 'John Doe',
-                email: 'john@example.com',
+                email: 'authController_integration@example.com',
                 password: 'password123',
                 phone: '1234567890',
                 address: '',
@@ -132,7 +132,7 @@ describe('User Registration', () => {
             .post('/api/v1/auth/register')
             .send({
                 name: 'John Doe',
-                email: 'john@example.com',
+                email: 'authController_integration@example.com',
                 password: 'password123',
                 phone: '1234567890',
                 address: '123 Main St',
@@ -146,31 +146,31 @@ describe('User Registration', () => {
 
 describe('User Login', () => {
     beforeEach(async () => {
-        await userModel.deleteMany({});
+        await userModel.deleteMany({ email: 'authController_integration@example.com' });
         // Register a user to test login
         await request(server)
             .post('/api/v1/auth/register')
             .send({
                 name: 'John Doe',
-                email: 'john@example.com',
+                email: 'authController_integration@example.com',
                 password: 'password123',
                 phone: '1234567890',
                 address: '123 Main St',
                 answer: 'blue'
             });
         // Check if the user is in the database
-        const user = await userModel.findOne({ email: 'john@example.com' });
+        const user = await userModel.findOne({ email: 'authController_integration@example.com' });
     });
 
     it('should login with valid email and password', async () => {
         const response = await request(server)
             .post('/api/v1/auth/login')
             .send({
-                email: 'john@example.com',
+                email: 'authController_integration@example.com',
                 password: 'password123'
             });
         const users = await userModel.find({});
-        const user = await userModel.findOne({ email: 'john@example.com' });
+        const user = await userModel.findOne({ email: 'authController_integration@example.com' });
         expect(response.status).toBe(200);
         expect(response.body.success).toBe(true);
         expect(response.body.message).toBe('login successfully');
@@ -192,7 +192,7 @@ describe('User Login', () => {
         const response = await request(server)
             .post('/api/v1/auth/login')
             .send({
-                email: 'john@example.com',
+                email: 'authController_integration@example.com',
                 password: 'wrongpassword'
             });
         expect(response.status).toBe(401);
@@ -215,13 +215,13 @@ describe('User Login', () => {
 
 describe('Password Reset', () => {
     beforeEach(async () => {
-        await userModel.deleteMany({});
+        await userModel.deleteMany({ email: 'authController_integration@example.com' });
         // Register a user to test password reset
         await request(server)
             .post('/api/v1/auth/register')
             .send({
                 name: 'John Doe',
-                email: 'john@example.com',
+                email: 'authController_integration@example.com',
                 password: 'password123',
                 phone: '1234567890',
                 address: '123 Main St',
@@ -233,7 +233,7 @@ describe('Password Reset', () => {
         const response = await request(server)
             .post('/api/v1/auth/forgot-password')
             .send({
-                email: 'john@example.com',
+                email: 'authController_integration@example.com',
                 answer: 'blue',
                 newPassword: 'newpassword123'
             });
@@ -259,7 +259,7 @@ describe('Password Reset', () => {
         const response = await request(server)
             .post('/api/v1/auth/forgot-password')
             .send({
-                email: 'john@example.com',
+                email: 'authController_integration@example.com',
                 answer: 'wronganswer',
                 newPassword: 'newpassword123'
             });
@@ -272,7 +272,7 @@ describe('Password Reset', () => {
         const response = await request(server)
             .post('/api/v1/auth/forgot-password')
             .send({
-                email: 'john@example.com',
+                email: 'authController_integration@example.com',
                 answer: 'blue',
                 newPassword: ''
             });
@@ -299,13 +299,13 @@ describe('Profile Update', () => {
     let token;
 
     beforeEach(async () => {
-        await userModel.deleteMany({});
+        await userModel.deleteMany({ email: 'authController_integration@example.com' });
         // Register and login a user to test profile update
         await request(server)
             .post('/api/v1/auth/register')
             .send({
                 name: 'John Doe',
-                email: 'john@example.com',
+                email: 'authController_integration@example.com',
                 password: 'password123',
                 phone: '1234567890',
                 address: '123 Main St',
@@ -315,7 +315,7 @@ describe('Profile Update', () => {
         const loginResponse = await request(server)
             .post('/api/v1/auth/login')
             .send({
-                email: 'john@example.com',
+                email: 'authController_integration@example.com',
                 password: 'password123'
             });
 
@@ -352,7 +352,7 @@ describe('Profile Update', () => {
             .set('Authorization', `Bearer ${token}`)
             .send({
                 name: 'Jane Doe',
-                email: 'jane@example.com',
+                email: 'authController_integration@example.com',
                 phone: '0987654321',
                 address: '456 Elm St',
                 answer: 'green',
