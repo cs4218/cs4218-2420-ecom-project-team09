@@ -59,6 +59,10 @@ export async function deleteProduct(page, name) {
 
     const productLink = await page.getByRole('link', { name: name });
     await productLink.click();
+
+    // Wait for 3 seconds
+    await page.waitForTimeout(3000);
+
     await page.getByRole('button', { name: 'DELETE PRODUCT' }).click();
 
     await expect(page).toHaveURL('http://localhost:3000/dashboard/admin/products');
@@ -71,6 +75,9 @@ export async function updateProduct(page, existingName, updatedProduct) {
 
     const productLink = await page.getByRole('link', { name: existingName });
     await productLink.click();
+
+    // Wait for 3 seconds
+    await page.waitForTimeout(3000);
 
     const { name, description, price, quantity, photo } = updatedProduct;
     
