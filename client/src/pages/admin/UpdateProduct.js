@@ -16,7 +16,7 @@ const UpdateProduct = () => {
   const [price, setPrice] = useState("");
   const [category, setCategory] = useState("");
   const [quantity, setQuantity] = useState("");
-  const [shipping, setShipping] = useState("");
+  const [shipping, setShipping] = useState(false);
   const [photo, setPhoto] = useState("");
   const [id, setId] = useState("");
 
@@ -33,7 +33,14 @@ const UpdateProduct = () => {
       setPrice(data.product.price);
       setQuantity(data.product.quantity);
       setShipping(data.product.shipping);
-      setCategory(data.product.category._id);
+      setCategory(data.product.category?._id);
+
+      const photoResponse = await axios.get(
+        `/api/v1/product/product-photo/${data.product._id}`,
+        { responseType: "blob" } 
+      );
+      setPhoto(photoResponse.data);
+
     } catch (error) {
       console.log(error);
     }
@@ -68,8 +75,13 @@ const UpdateProduct = () => {
       productData.append("description", description);
       productData.append("price", price);
       productData.append("quantity", quantity);
-      photo && productData.append("photo", photo);
+      productData.append("photo", photo);
+      if (!category) {
+        toast.error("Please select a category");
+        return;
+      }
       productData.append("category", category);
+      productData.append("shipping", shipping);
       const { data } = await axios.put(
         `/api/v1/product/update-product/${id}`,
         productData
@@ -89,8 +101,8 @@ const UpdateProduct = () => {
   //delete a product
   const handleDelete = async () => {
     try {
-      let answer = window.prompt("Are You Sure want to delete this product ? ");
-      if (!answer) return;
+      // let answer = window.prompt("Are You Sure want to delete this product ? ");
+      // if (!answer) return;
       await axios.delete(`/api/v1/product/delete-product/${id}`);
       toast.success("Product Deleted Successfully");
       navigate("/dashboard/admin/products");
@@ -128,7 +140,7 @@ const UpdateProduct = () => {
               </Select>
               <div className="mb-3">
                 <label className="btn btn-outline-secondary col-md-12">
-                  {photo ? photo.name : "Upload Photo"}
+                  {photo.name || "Upload Photo"}
                   <input
                     type="file"
                     name="photo"
@@ -206,7 +218,7 @@ const UpdateProduct = () => {
                   onChange={(value) => {
                     setShipping(value);
                   }}
-                  value={shipping ? "yes" : "No"}
+                  value={shipping == true ? "yes" : "No"}
                 >
                   <Option value="0">No</Option>
                   <Option value="1">Yes</Option>

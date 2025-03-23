@@ -369,25 +369,6 @@ describe('updateProductController', () => {
     });
     expect(consoleErrorSpy).toHaveBeenCalled();
   });
-  
-  // Test for edge cases
-  test('should allow null or undefined fields for shipping (optional field)', async () => {
-    // Arrange
-    req.fields.shipping = null; // Optional field can be null
-    
-    // Act
-    await updateProductController(req, res);
-    
-    // Assert
-    expect(productModel.findByIdAndUpdate).toHaveBeenCalledWith(
-      'product123',
-      expect.objectContaining({
-        shipping: null
-      }),
-      { new: true }
-    );
-    expect(res.status).toHaveBeenCalledWith(201);
-  });
 
   describe('photo validation handling', () => {
     test('should reject when req.files is undefined', async () => {

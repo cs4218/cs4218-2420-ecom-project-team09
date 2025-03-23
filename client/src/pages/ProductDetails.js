@@ -72,7 +72,6 @@ const ProductDetails = () => {
             data-testid="current-product-add-to-cart"
             onClick={() => {
               setCart([...cart, product]);
-              localStorage.setItem("cart", JSON.stringify([...cart, product]));
               toast.success("Item Added to cart");
             }}
           >
@@ -119,7 +118,6 @@ const ProductDetails = () => {
                   data-testid="similar-product-add-to-cart"
                   onClick={() => {
                     setCart([...cart, p]);
-                      localStorage.setItem("cart", JSON.stringify([...cart, p]));
                     toast.success("Item Added to cart");
                   }}
                 >

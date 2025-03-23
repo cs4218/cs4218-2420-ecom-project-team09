@@ -19,7 +19,7 @@ const CartPage = () => {
 
   //total price
   const totalPrice = () => {
-    try {
+    try { 
       let total = 0;
       cart?.map((item) => {
         total = total + item.price;
@@ -35,11 +35,12 @@ const CartPage = () => {
   //detele item
   const removeCartItem = (pid) => {
     try {
-      let myCart = [...cart];
-      let index = myCart.findIndex((item) => item._id === pid);
-      myCart.splice(index, 1);
-      setCart(myCart);
-      localStorage.setItem("cart", JSON.stringify(myCart));
+      setCart(cart => {
+        let myCart = [...cart];
+        let index = myCart.findIndex((item) => item._id === pid);
+        myCart.splice(index, 1);
+        return myCart;
+      })
     } catch (error) {
       console.log(error);
     }
@@ -68,7 +69,6 @@ const CartPage = () => {
         cart,
       });
       setLoading(false);
-      localStorage.removeItem("cart");
       setCart([]);
       navigate("/dashboard/user/orders");
       toast.success("Payment Completed Successfully ");
@@ -99,8 +99,8 @@ const CartPage = () => {
         <div className="container ">
           <div className="row ">
             <div className="col-md-7  p-0 m-0">
-              {cart?.map((p) => (
-                <div className="row card flex-row" key={p._id}>
+              {cart?.map((p, i) => (
+                <div className="row card flex-row" key={i}>
                   <div className="col-md-4">
                     <img
                       src={`/api/v1/product/product-photo/${p._id}`}
@@ -112,7 +112,7 @@ const CartPage = () => {
                   </div>
                   <div className="col-md-4">
                     <p>{p.name}</p>
-                    <p>{p.description.substring(0, 30)}</p>
+                    <p>{p.description ? p.description.substring(0, 30) : "No description available"}</p>
                     <p>Price : {p.price}</p>
                   </div>
                   <div className="col-md-4 cart-remove-btn">
