@@ -453,4 +453,103 @@ describe('Product Integration Tests', () => {
         const productNames = productCategoryRes.body.products.map(p => p.name).sort();
         expect(productNames).toEqual(['Test Book 1', 'Test Book 2'].sort());
     });
+
+    it("should filter products by categories and price range", async () => {
+        // Create a test category
+        const categoryName = "Test Filter Category";
+        
+        // Create category via API
+        const categoryRes = await request(app)
+            .post("/api/v1/category/create-category")
+            .set("Authorization", `Bearer ${adminToken}`)
+            .send({ name: categoryName });
+            
+        // Get the category data from response
+        const category = categoryRes.body.category;
+        const categoryId = category._id;
+        
+        // Create test products with different prices
+        const mockPhotoPath = path.resolve(__dirname, '../ui-tests/galaxy.jpeg');
+        
+        // Create products in different price ranges
+        const productsData = [
+            {
+                name: "Low Price Product",
+                description: "Product in the low price range",
+                price: "15.99", // In the [0,19] range
+                category: categoryId,
+                quantity: "10",
+                shipping: "true"
+            },
+            {
+                name: "Medium Price Product",
+                description: "Product in the medium price range",
+                price: "45.99", // In the [40,59] range
+                category: categoryId,
+                quantity: "10",
+                shipping: "true"
+            },
+            {
+                name: "High Price Product",
+                description: "Product in the high price range",
+                price: "85.99", // In the [80,99] range
+                category: categoryId,
+                quantity: "10",
+                shipping: "true"
+            }
+        ];
+        
+        // Create each product
+        for (const product of productsData) {
+            await request(app)
+                .post("/api/v1/product/create-product")
+                .set("Authorization", `Bearer ${adminToken}`)
+                .field("name", product.name)
+                .field("description", product.description)
+                .field("price", product.price)
+                .field("category", product.category)
+                .field("quantity", product.quantity)
+                .field("shipping", product.shipping)
+                .attach("photo", mockPhotoPath);
+        }
+        
+        // Test the product-filters endpoint
+        // Filter for category and low price range [0,19]
+        const filtersPayload = {
+            "checked": [categoryId],
+            "radio": [0, 19]
+        };
+        
+        const filtersRes = await request(app)
+            .post("/api/v1/product/product-filters")
+            .send(filtersPayload);
+        
+        // Verify the response
+        expect(filtersRes.status).toBe(200);
+        expect(filtersRes.body).toHaveProperty('success', true);
+        expect(filtersRes.body).toHaveProperty('products');
+        expect(Array.isArray(filtersRes.body.products)).toBe(true);
+        
+        // Should only return the product in the low price range
+        expect(filtersRes.body.products.length).toBe(1);
+        expect(filtersRes.body.products[0].name).toBe("Low Price Product");
+        expect(parseFloat(filtersRes.body.products[0].price)).toBeLessThanOrEqual(19);
+        
+        // Test with a different price range
+        const highPriceFiltersPayload = {
+            "checked": [categoryId],
+            "radio": [80, 99]
+        };
+        
+        const highPriceFiltersRes = await request(app)
+            .post("/api/v1/product/product-filters")
+            .send(highPriceFiltersPayload);
+        
+        // Verify the high price filter response
+        expect(highPriceFiltersRes.status).toBe(200);
+        expect(highPriceFiltersRes.body.products.length).toBe(1);
+        expect(highPriceFiltersRes.body.products[0].name).toBe("High Price Product");
+        expect(parseFloat(highPriceFiltersRes.body.products[0].price)).toBeGreaterThanOrEqual(80);
+        expect(parseFloat(highPriceFiltersRes.body.products[0].price)).toBeLessThanOrEqual(99);
+    });
 });
