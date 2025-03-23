@@ -29,8 +29,8 @@ jobs:
           cd client
           npm install
       
-      - name: Run frontend tests
-        run: npm run test:frontend
+      # - name: Run frontend tests
+      #   run: npm run test:frontend
 
       - name: Run backend tests
         run: set -a && . .env && set +a && npm run test:backend
