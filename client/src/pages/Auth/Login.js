@@ -22,6 +22,10 @@ const Login = () => {
       const res = await axios.post("/api/v1/auth/login", {
         email,
         password,
+      }, {
+        headers: {
+          'Content-Type': 'application/json',
+        },
       });
       if (res && res.data.success) {
         toast.success(res.data && res.data.message, {

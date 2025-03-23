@@ -24,11 +24,11 @@ export const createProductController = async (req, res) => {
 
     // Check if photo is missing
     if (!req.files || !req.files.photo) {
-      return res.status(500).send({ 
-        error: "Photo is Required and should be less then 1mb" 
+      return res.status(500).send({
+        error: "Photo is Required and should be less then 1mb",
       });
     }
-    
+
     // Now we can safely destructure photo
     const { photo } = req.files;
 
@@ -44,15 +44,19 @@ export const createProductController = async (req, res) => {
         return res.status(500).send({ error: "Category is Required" });
       case !quantity:
         return res.status(500).send({ error: "Quantity is Required" });
-      case !shipping:
-        return res.status(500).send({ error: "Shipping is Required" });
-      case !photo || Object.keys(photo).length === 0 || photo.size <= 0 || photo.size > 1000000:
+      case !photo ||
+        Object.keys(photo).length === 0 ||
+        photo.size <= 0 ||
+        photo.size > 1000000:
         return res
           .status(500)
           .send({ error: "Photo is Required and should be less then 1mb" });
     }
 
-    const products = new productModel({ ...req.fields, slug: slugify(name, { lower: true, strict: true, trim: true }) });
+    const products = new productModel({
+      ...req.fields,
+      slug: slugify(name, { lower: true, strict: true, trim: true }),
+    });
 
     products.photo.data = fs.readFileSync(photo.path);
     products.photo.contentType = photo.type;
@@ -99,7 +103,6 @@ export const getProductController = async (req, res) => {
   }
 };
 
-
 // get single product
 export const getSingleProductController = async (req, res) => {
   try {
@@ -126,7 +129,9 @@ export const getSingleProductController = async (req, res) => {
 // get photo
 export const productPhotoController = async (req, res) => {
   try {
-    const product = await productModel.findOne({ _id: req.params.pid }).select("photo");
+    const product = await productModel
+      .findOne({ _id: req.params.pid })
+      .select("photo");
     if (product.photo.data) {
       res.set("Content-type", product.photo.contentType);
       return res.status(200).send(product.photo.data);
@@ -148,17 +153,19 @@ export const deleteProductController = async (req, res) => {
     if (!req.params.pid) {
       return res.status(400).send({
         success: false,
-        message: "Product ID is required"
+        message: "Product ID is required",
       });
     }
 
-    const deletedProduct = await productModel.findByIdAndDelete(req.params.pid).select("-photo");
+    const deletedProduct = await productModel
+      .findByIdAndDelete(req.params.pid)
+      .select("-photo");
 
     // Check if product was found and deleted
     if (!deletedProduct) {
       return res.status(404).send({
         success: false,
-        message: "Product not found"
+        message: "Product not found",
       });
     }
 
@@ -169,7 +176,7 @@ export const deleteProductController = async (req, res) => {
   } catch (error) {
     console.error(error);
 
-    if (error.name === 'CastError') {
+    if (error.name === "CastError") {
       return res.status(400).send({
         success: false,
         message: "Invalid Product ID format",
@@ -192,7 +199,7 @@ export const updateProductController = async (req, res) => {
     if (!req.params.pid) {
       return res.status(400).send({
         success: false,
-        message: "Product ID is required"
+        message: "Product ID is required",
       });
     }
 
@@ -201,11 +208,11 @@ export const updateProductController = async (req, res) => {
 
     // Check if photo is missing
     if (!req.files || !req.files.photo) {
-      return res.status(500).send({ 
-        error: "Photo is Required and should be less then 1mb" 
+      return res.status(500).send({
+        error: "Photo is Required and should be less then 1mb",
       });
     }
-    
+
     // Now we can safely destructure photo
     const { photo } = req.files;
 
@@ -223,7 +230,10 @@ export const updateProductController = async (req, res) => {
         return res.status(500).send({ error: "Shipping is Required" });
       case !quantity:
         return res.status(500).send({ error: "Quantity is Required" });
-      case !photo || Object.keys(photo).length === 0 || photo.size <= 0 || photo.size > 1000000:
+      case !photo ||
+        Object.keys(photo).length === 0 ||
+        photo.size <= 0 ||
+        photo.size > 1000000:
         return res
           .status(500)
           .send({ error: "Photo is Required and should be less then 1mb" });
@@ -232,21 +242,24 @@ export const updateProductController = async (req, res) => {
     try {
       const products = await productModel.findByIdAndUpdate(
         req.params.pid,
-        { ...req.fields, slug: slugify(name, { lower: true, strict: true, trim: true }) },
+        {
+          ...req.fields,
+          slug: slugify(name, { lower: true, strict: true, trim: true }),
+        },
         { new: true }
       );
-      
+
       // Check if product exists
       if (!products) {
         return res.status(404).send({
           success: false,
-          message: "Product not found"
+          message: "Product not found",
         });
       }
-  
+
       products.photo.data = fs.readFileSync(photo.path);
       products.photo.contentType = photo.type;
-  
+
       await products.save();
       res.status(201).send({
         success: true,
@@ -254,11 +267,11 @@ export const updateProductController = async (req, res) => {
         products,
       });
     } catch (updateError) {
-      if (updateError.name === 'CastError') {
+      if (updateError.name === "CastError") {
         return res.status(400).send({
           success: false,
           message: "Invalid Product ID format",
-          error: updateError
+          error: updateError,
         });
       }
       throw updateError;
@@ -405,7 +418,7 @@ export const relatedProductController = async (req, res) => {
     console.error(error);
 
     // Check if it's a CastError (invalid ObjectId)
-    if (error.name === 'CastError') {
+    if (error.name === "CastError") {
       return res.status(400).send({
         success: false,
         message: "Invalid Product ID or Category ID format",
@@ -413,7 +426,8 @@ export const relatedProductController = async (req, res) => {
       });
     }
 
-    res.status(500).send({ // Changed from 400 to 500 for server errors
+    res.status(500).send({
+      // Changed from 400 to 500 for server errors
       success: false,
       message: "Error while getting related products",
       error,
@@ -451,7 +465,7 @@ export const productCategoryController = async (req, res) => {
   } catch (error) {
     console.log(error);
 
-    if (error.name === 'CastError') {
+    if (error.name === "CastError") {
       return res.status(400).send({
         success: false,
         message: "Invalid Category slug",
@@ -467,96 +481,133 @@ export const productCategoryController = async (req, res) => {
   }
 };
 
-//payment gateway api
-//token
-export const braintreeTokenController = async (req, res, gatewayParam=gateway) => {
-  try {
-    gatewayParam.clientToken.generate({}, function (err, response) {
-      if (err) {
-        res.status(500).send(err);
-      } else {
-        res.status(200).send(response); // Add 200 status code to the response for standard API requests
-      }
-    });
-  } catch (error) {
-    console.error(error);
-  }
+// Higher-order function for braintreeTokenController
+export const braintreeTokenController = (braintreeGateway = gateway) => {
+  return async (req, res, next) => {
+    try {
+      const response = await braintreeGateway.clientToken.generate({});
+      return res.status(200).send(response); // Send 200 status code for successful response
+    } catch (error) {
+      console.error(error);
+      return res.status(500).send({
+        success: false,
+        message: "Error generating Braintree token",
+        error: error.message,
+      });
+    }
+  };
 };
 
-//payment
-export const brainTreePaymentController = async (req, res, gatewayParam=gateway) => {
-  try {
-    const { nonce, cart } = req.body;
+// payment
+export const brainTreePaymentController = (
+  braintreeGateway = gateway
+) => {
+  return async (req, res, next) => {
+    try {
+      const { nonce, cart } = req.body;
 
-    //Check if the nonce is missing 
-    if (!nonce) {
-      return res.status(400).send(new Error("Payment method nonce is required"));
-    }
-
-    // Check if the cart is empty
-    if (!cart || cart.length === 0) {
-      return res.status(400).send(new Error("Cart is empty, cannot process payment"));
-    }
-
-    // Check if cart is missing price
-    for (let item of cart) {
-      if (!item.hasOwnProperty("price")) {
-        return res.status(400).send(new Error("Price is missing in cart"));
+      // Check if the nonce is missing
+      if (!nonce) {
+        return res.status(400).send({
+          success: false,
+          message: "Payment method nonce is required",
+        });
       }
-    }
 
-    // Check if all items in the car are numeric
-    for (let item of cart) {
-      if (isNaN(item.price)) {
-        return res.status(400).send(new Error("Invalid price in cart, prices must be numeric"));
+      // Check if the cart is empty
+      if (!cart || cart.length === 0) {
+        return res.status(400).send({
+          success: false,
+          message: "Cart is empty, cannot process payment",
+        });
       }
-    }
 
-    // Check for negative prices in the cart
-    for (let item of cart) {
-      if (item.price < 0) {
-        return res.status(400).send(new Error("Invalid price in cart, prices must be non-negative"));
-      }
-    }
-
-    let total = 0;
-    cart.map((i) => {
-      total += i.price;
-    });
-    let newTransaction = gatewayParam.transaction.sale(
-      {
-        amount: total,
-        paymentMethodNonce: nonce,
-        options: {
-          submitForSettlement: true,
-        },
-      },
-      async function (error, result) {
-        // If the payment proces failed
-        if (error) {
-          return res.status(500).send(new Error("Payment processing failed"));
-        }
-
-        // If the transaction failed
-        if (!result || !result.success) {
-          return res.status(500).send(new Error(result.message || "Transaction failed"));
-        }
-
-        try {
-          const order = new orderModel({
-            products: cart,
-            payment: result,
-            buyer: req.user._id,
+      // Check if cart is missing price
+      for (let item of cart) {
+        console.log(item, item.hasOwnProperty("price"))
+        if (!item.hasOwnProperty("price")) {
+          return res.status(400).send({
+            success: false,
+            message: "Price is missing in cart",
           });
-          await order.save(); // Asynchronous to catch any database errors
-          return res.status(200).json({ ok: true });
-        } catch (dbError) {
-          console.error("Database save error:", dbError);
-          return res.status(500).send(dbError);
         }
       }
-    );
-  } catch (error) {
-    console.error(error);
-  }
+
+      // Check if all items in the cart are numeric
+      for (let item of cart) {
+        if (isNaN(item.price)) {
+          return res.status(400).send({
+            success: false,
+            message: "Invalid price in cart, prices must be numeric",
+          });
+        }
+      }
+
+      // Check for negative prices in the cart
+      for (let item of cart) {
+        if (item.price < 0) {
+          return res.status(400).send({
+            success: false,
+            message: "Invalid price in cart, prices must be non-negative",
+          });
+        }
+      }
+
+      let total = 0;
+      cart.map((i) => {
+        total += i.price;
+      });
+      let newTransaction = braintreeGateway.transaction.sale(
+        {
+          amount: total,
+          paymentMethodNonce: nonce,
+          options: {
+            submitForSettlement: true,
+          },
+        },
+        async function (error, result) {
+          // If the payment process failed
+          if (error) {
+            return res.status(500).send({
+              success: false,
+              message: "Payment processing failed",
+              error: error.message,
+            });
+          }
+
+          // If the transaction failed
+          if (!result || !result.success) {
+            return res.status(500).send({
+              success: false,
+              message: result.message || "Transaction failed",
+            });
+          }
+
+          try {
+            const order = new orderModel({
+              products: cart,
+              payment: result,
+              buyer: req.user._id,
+            });
+            await order.save(); // Asynchronous to catch any database errors
+            return res.status(200).send({ ok: true });
+          } catch (dbError) {
+            console.error("Database save error:", dbError);
+            return res.status(500).send({
+              success: false,
+              message: "Error saving order to database",
+              error: dbError.message,
+            });
+          }
+        }
+      );
+    } catch (error) {
+      console.error(error);
+      return res.status(500).send({ 
+        success: false,
+        message: "Unexpected error occurred",
+        error: error.message,
+      });
+    }
+  };
 };

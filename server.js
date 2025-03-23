@@ -18,6 +18,10 @@ const app = express();
 
 //middlewares
 app.use(cors());
+app.use((req, res, next) => {
+    console.log("Request Headers:", req.headers);
+    next();
+});
 app.use(express.json());
 app.use(morgan('dev'));
 
@@ -34,8 +38,10 @@ app.get('/', (req,res) => {
 
 const PORT = process.env.PORT || 6060;
 
-app.listen(PORT, () => {
-    console.log(`Server running on ${process.env.DEV_MODE} mode on ${PORT}`.bgCyan.white);
-});
+if (import.meta.url === `file://${process.argv[1]}`) {
+    app.listen(PORT, () => {
+        console.log(`Server running on ${process.env.DEV_MODE} mode on ${PORT}`.bgCyan.white);
+    });
+}
 
 export default app;
