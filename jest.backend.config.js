@@ -8,15 +8,11 @@ export default {
 
   // which test to run
   testMatch: [
-    // "<rootDir>/controllers/**/*.test.js",
-    // "<rootDir>/helpers/*.test.js",
-    // "<rootDir>/middlewares/*.test.js",
-    // "**/integration/*.test.js",
-    // "**/integration/categoryApi.integration.test.js",
-    "**/integration/homepageApi.integration.test.js",
-    "**/integration/categoryproductApi.integration.test.js",
-    "**/integration/productdetailsApi.integration.test.js",
-    "**/integration/searchApi.integration.test.js"
+    "<rootDir>/controllers/**/*.test.js",
+    "<rootDir>/helpers/*.test.js",
+    "<rootDir>/middlewares/*.test.js",
+    "**/integration/*.test.js",
+    "**/integration/categoryApi.integration.test.js",
   ],
 
   // jest code coverage
