@@ -26,10 +26,3 @@ export async function resetDB() {
     await seedDB();
     process.exit(0);
 }
-
-resetDB().catch((err) => {
-    console.error(
-        'An error occurred while attempting to seed the database:',
-        err,
-    );
-});

@@ -1,5 +1,10 @@
 // categories.spec.js
 import { test, expect } from '@playwright/test';
+import { resetDB } from "../../helpers/dbHelper.js";
+
+test.beforeAll(async () => {
+  await resetDB();
+});
 
 test.describe('Categories Page', () => {
   test('should display all categories', async ({ page }) => {

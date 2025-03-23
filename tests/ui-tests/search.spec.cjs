@@ -1,7 +1,12 @@
 import { test, expect } from '@playwright/test';
+import { resetDB } from "../../helpers/dbHelper.js";
 
 // Define base URL
 const baseURL = 'http://localhost:3000';
+
+test.beforeAll(async () => {
+    await resetDB();
+});
 
 test.describe('Search functionality', () => {
   test.beforeEach(async ({ page }) => {

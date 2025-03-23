@@ -1,5 +1,10 @@
 // test-each-category.spec.js
 import { test, expect } from '@playwright/test';
+import { resetDB } from "../../helpers/dbHelper.js";
+
+test.beforeAll(async () => {
+  await resetDB();
+});
 
 test.describe('Test Each Individual Category', () => {
   test('should test each category from the All Categories page', async ({ page }) => {

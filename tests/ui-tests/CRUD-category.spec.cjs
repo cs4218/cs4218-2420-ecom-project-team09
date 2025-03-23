@@ -7,6 +7,11 @@ import {
     deleteCategory,
     editCategory
 } from './categoryHelper.cjs'
+import { resetDB } from "../../helpers/dbHelper.js";
+
+test.beforeAll(async () => {
+    await resetDB();
+});
 
 test.beforeEach(async ({ page }) => {
     await adminLogin(page);

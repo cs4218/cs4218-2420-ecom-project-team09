@@ -1,4 +1,9 @@
 import { test, expect } from '@playwright/test';
+import { resetDB } from "../../helpers/dbHelper.js";
+
+test.beforeAll(async () => {
+    await resetDB();
+});
 
 test.describe('Product Details Page Tests', () => {
   // Variable to store the slug of a product to test with

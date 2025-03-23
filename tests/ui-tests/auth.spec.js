@@ -15,8 +15,10 @@ import {
 } from "./authHelper.js";
 import userModel from "../../models/userModel.js";
 import connectDB from "../../config/db.js";
+import { resetDB } from "../../helpers/dbHelper.js";
 
 test.beforeAll(async () => {
+  await resetDB();
   await connectDB();
   await userModel.deleteMany({ email: "userRegisterAndLogin@example.com" });
   await userModel.deleteMany({ email: "userCannotLoginWithoutRegister@example.com"});

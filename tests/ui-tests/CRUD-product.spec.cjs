@@ -13,6 +13,8 @@ import {
     createCategory,
     deleteCategory,
 } from './categoryHelper.cjs'
+import { resetDB } from "../../helpers/dbHelper.js";
+
 
 const iPhone = {
     name: 'iPhone 15',
@@ -33,6 +35,10 @@ const galaxy = {
     shipping: 'Yes',
     photo: path.resolve(__dirname, 'galaxy.jpeg')
 }
+
+test.beforeAll(async () => {
+    await resetDB();
+});
 
 test.beforeEach(async ({ page }) => {
     await adminLogin(page);
