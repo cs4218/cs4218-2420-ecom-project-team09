@@ -1,5 +1,6 @@
 import { test } from '@playwright/test';
 import path from 'path';
+import { resetDB } from '../../helpers/dbHelper';
 
 import { 
     adminLogin, 
@@ -28,6 +29,7 @@ const iPhone = {
 }
 
 test.beforeEach(async ({ page }) => {
+    await resetDB();
     await adminLogin(page);
 });
 

@@ -77,7 +77,7 @@ const UpdateProduct = () => {
       productData.append("quantity", quantity);
       productData.append("photo", photo);
       if (!category) {
-        toast.error("Please select a category");
+        toast.error("Category is required");
         return;
       }
       productData.append("category", category);
@@ -218,7 +218,7 @@ const UpdateProduct = () => {
                   onChange={(value) => {
                     setShipping(value);
                   }}
-                  value={shipping == true ? "yes" : "No"}
+                  value={shipping ? "yes" : "No"}
                 >
                   <Option value="0">No</Option>
                   <Option value="1">Yes</Option>

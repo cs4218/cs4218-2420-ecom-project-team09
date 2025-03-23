@@ -21,6 +21,7 @@ export default {
     "helpers/**",
     "middlewares/**",
   ],
+  coverageDirectory: "coverage/backend",
   coverageThreshold: {
     global: {
       lines: 0,

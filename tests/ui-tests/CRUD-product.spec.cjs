@@ -1,6 +1,7 @@
 import { test, expect } from '@playwright/test';
 import path from 'path';
 import { adminLogin } from './CRUD-category.spec.cjs';
+import { resetDB } from '../../helpers/dbHelper';
 
 const iPhone = {
     name: 'iPhone 15',
@@ -122,6 +123,7 @@ export async function productRemovedFromHomePage(page, product) {
 }
 
 test.beforeEach(async ({ page }) => {
+    await resetDB();
     await adminLogin(page);
 });
 

@@ -25,6 +25,7 @@ export default {
   // jest code coverage
   collectCoverage: true,
   collectCoverageFrom: ["client/**/*.js"],
+  coverageDirectory: "coverage/frontend",
   coverageThreshold: {
     global: {
       lines: 0,

@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { resetDB } from '../../helpers/dbHelper';
 
 // HELPER FUNCTIONS
 export async function adminLogin(page) {
@@ -48,6 +49,7 @@ export async function checkCategoryDoesNotExist(page, category) {
 }
 
 test.beforeEach(async ({ page }) => {
+    await resetDB();
     await adminLogin(page);
 });
 
