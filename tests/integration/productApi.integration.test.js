@@ -312,4 +312,60 @@ describe('Product Integration Tests', () => {
         expect(typeof countRes.body.total).toBe('number');
         expect(countRes.body.total).toBe(3); // Expecting 3 products created in this test
     });
+
+    it("should get product list by page successfully", async () => {
+        // Create multiple products for testing pagination
+        const category = await categoryModel.findOne({ name: "Valid Category" });
+        const mockPhotoPath = path.resolve(__dirname, '../ui-tests/galaxy.jpeg');
+        
+        // Create 6 products (to ensure we have enough for pagination)
+        const productData = Array.from({ length: 6 }, (_, i) => ({
+            name: `List Product ${i + 1}`,
+            description: `Test product ${i + 1} for pagination`,
+            price: `${(i + 1) * 100}`,
+            category: category._id.toString(),
+            quantity: `${(i + 1) * 10}`,
+            shipping: (i % 2 === 0).toString()
+        }));
+        
+        // Create each product
+        for (const product of productData) {
+            await request(app)
+                .post("/api/v1/product/create-product")
+                .set("Authorization", `Bearer ${adminToken}`)
+                .field("name", product.name)
+                .field("description", product.description)
+                .field("price", product.price)
+                .field("category", product.category)
+                .field("quantity", product.quantity)
+                .field("shipping", product.shipping)
+                .attach("photo", mockPhotoPath);
+        }
+        
+        // Test the product list endpoint for page 1
+        const page = 1;
+        const listRes = await request(app).get(`/api/v1/product/product-list/${page}`);
+        
+        // Verify the response
+        expect(listRes.status).toBe(200);
+        expect(listRes.body).toHaveProperty('success', true);
+        expect(listRes.body).toHaveProperty('products');
+        expect(Array.isArray(listRes.body.products)).toBe(true);
+        
+        // Assuming the API returns a maximum of 6 products per page
+        expect(listRes.body.products.length).toBeLessThanOrEqual(6);
+        
+        // Verify the structure of the first product
+        const firstProduct = listRes.body.products[0];
+        expect(firstProduct).toHaveProperty('_id');
+        expect(firstProduct).toHaveProperty('name');
+        expect(firstProduct).toHaveProperty('slug');
+        expect(firstProduct).toHaveProperty('description');
+        expect(firstProduct).toHaveProperty('price');
+        expect(firstProduct).toHaveProperty('category');
+        expect(firstProduct).toHaveProperty('quantity');
+        expect(firstProduct).toHaveProperty('shipping');
+        expect(firstProduct).toHaveProperty('createdAt');
+        expect(firstProduct).toHaveProperty('updatedAt');
+    });
 });
