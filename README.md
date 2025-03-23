@@ -22,6 +22,8 @@ Kim YongBeom, Ng Rui Jie Solomon, Sim Wei Peng Eric
 4. Wait for the PlayWright Test popup, and click on the play button
 5. It is a known issue that UI test may be flaky due to latency of the website. We seek your understanding. Please rerun the UI test if any fails.
 
+![alt text](image-1.png)
+
 ## Running Integration Test
 
 1. Integration test are located in `test/integration`
