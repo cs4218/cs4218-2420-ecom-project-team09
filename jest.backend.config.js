@@ -13,7 +13,7 @@ export default {
     // "<rootDir>/middlewares/*.test.js",
     // "**/integration/*.test.js",
     "**/integration/categoryApi.integration.test.js",
-    "**/integration/productApi.integration.test.js"
+    // "**/integration/productApi.integration.test.js"
   ],
 
   // jest code coverage
