@@ -125,26 +125,4 @@ test.describe('Navbar and Navigation Tests', () => {
     await page.getByRole('link', { name: 'Register' }).click();
     await expect(page).toHaveURL('http://localhost:3000/register');
   });
-
-  // test('should show search results when using search input', async ({ page }) => {
-  //   // Find the search input
-  //   const searchInput = page.locator('input[type="search"]');
-    
-  //   // If the search input exists, continue with the test
-  //   if (await searchInput.count() > 0) {
-  //     await searchInput.fill('test');
-  //     await searchInput.press('Enter');
-      
-  //     // Wait for navigation to complete
-  //     await page.waitForURL('**/search?keyword=test');
-      
-  //     // Verify we're on the search results page
-  //     await expect(page.url()).toContain('/search?keyword=test');
-  //   } else {
-  //     // If search input doesn't exist, skip the test
-  //     test.skip(true, 'Search input not found');
-  //   }
-  // });
 });
-
-// debug search

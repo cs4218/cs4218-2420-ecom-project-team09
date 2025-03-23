@@ -2,11 +2,6 @@
 import { test, expect } from '@playwright/test';
 
 test.describe('Test Each Individual Category', () => {
-  // Skip the dropdown test since the dropdown might not have individual items
-  test.skip('should test each category from the dropdown menu', async ({ page }) => {
-    // This test is skipped due to categories not being found in the dropdown
-  });
-  
   test('should test each category from the All Categories page', async ({ page }) => {
     // Navigate to the All Categories page
     await page.goto('http://localhost:3000/categories');

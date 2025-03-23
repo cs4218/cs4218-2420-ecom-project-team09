@@ -102,6 +102,8 @@ const HomePage = () => {
         radio,
       });
       setProducts(data?.products);
+      // Fix: update total to match filtered count
+      setTotal(data?.products.length);
     } catch (error) {
       console.log(error);
     }
@@ -199,22 +201,21 @@ const HomePage = () => {
           </div>
           <div className="m-2 p-3">
             {products && products.length < total && (
-              <button
-                className="btn loadmore"
-                onClick={(e) => {
-                  e.preventDefault();
-                  setPage(page + 1);
-                }}
-              >
+              <>
                 {loading ? (
-                  "Loading ..."
+                  <div className="text-center">Loading...</div>
                 ) : (
-                  <>
-                    {" "}
-                    Loadmore <AiOutlineReload />
-                  </>
+                  <button
+                    className="btn loadmore"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setPage(page + 1);
+                    }}
+                  >
+                    Load More
+                  </button>
                 )}
-              </button>
+              </>
             )}
           </div>
         </div>
