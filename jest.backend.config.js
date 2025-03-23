@@ -11,9 +11,7 @@ export default {
     // "<rootDir>/controllers/**/*.test.js",
     // "<rootDir>/helpers/*.test.js",
     // "<rootDir>/middlewares/*.test.js",
-    // "**/integration/*.test.js",
-    "**/integration/categoryApi.integration.test.js",
-    "**/integration/productApi.integration.test.js"
+    "**/integration/*.test.js",
   ],
 
   // jest code coverage
