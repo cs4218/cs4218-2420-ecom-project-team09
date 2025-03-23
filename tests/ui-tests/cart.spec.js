@@ -7,6 +7,7 @@ import productModel from "../../models/productModel.js";
 import { userLogin, assertUserLoginSuccess } from "./authHelper.js";
 import mongoose from "mongoose";
 import { addProductToCart, assertProductAddedToCart, assertItemsInCart, viewCart, removeItemFromCart, addProductToCartInDetails, assertProductAddedToCartInDetails } from "./cartHelper.js";
+import { resetDB } from "../../helpers/dbHelper.js";
 
 const user = getSampleUser('cart.spec.js@example.com');
 const products = [
@@ -52,6 +53,7 @@ const products = [
 ]
 
 test.beforeAll(async () => {
+  await resetDB();
   await connectDB();
   await userModel.deleteMany({ email: user.email });
 

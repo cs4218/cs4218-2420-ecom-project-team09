@@ -1,5 +1,6 @@
 import { test } from '@playwright/test';
 import path from 'path';
+import { resetDB } from "../../helpers/dbHelper.js";
 
 import {
     createProduct,
@@ -26,6 +27,10 @@ const iPhone = {
     shipping: 'Yes',
     photo: path.resolve(__dirname, 'iPhone15.jpeg')
 }
+
+test.beforeAll(async () => {
+    await resetDB();
+});
 
 test.beforeEach(async ({ page }) => {
     await adminLogin(page);

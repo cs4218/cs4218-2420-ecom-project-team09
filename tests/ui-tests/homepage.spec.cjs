@@ -1,4 +1,9 @@
 import { test, expect } from '@playwright/test';
+import { resetDB } from "../../helpers/dbHelper.js";
+
+test.beforeAll(async () => {
+    await resetDB();
+});
 
 test.describe('HomePage Tests', () => {
   test.beforeEach(async ({ page }) => {

@@ -1,5 +1,10 @@
 // tests/navbar.spec.js
 import { test, expect } from '@playwright/test';
+import { resetDB } from "../../helpers/dbHelper.js";
+
+test.beforeAll(async () => {
+    await resetDB();
+});
 
 test.describe('Navbar and Navigation Tests', () => {
   // Setup for each test - visit the homepage
