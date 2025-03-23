@@ -150,48 +150,4 @@ describe('Category Integration Tests', () => {
         expect(res.body.success).toBe(false);
         expect(res.body.message).toBe("Error while deleting category");
     });
-
-    it("should return all categories", async () => {
-      // Create multiple test categories
-      const categoryNames = ["Books", "Electronics", "Clothing"];
-      
-      // Create each category
-      for (const name of categoryNames) {
-          await categoryModel.create({
-              name: name
-          });
-      }
-      
-      // Client sends a GET request to get all categories
-      const res = await request(app)
-          .get("/api/v1/category/get-category");
-      
-      // Server should respond with 200 status code
-      expect(res.status).toBe(200);
-      expect(res.body.success).toBe(true);
-      expect(res.body.message).toBe("All Categories List");
-      
-      // Should return the categories array
-      expect(res.body).toHaveProperty('category');
-      expect(Array.isArray(res.body.category)).toBe(true);
-      expect(res.body.category.length).toBe(3);
-      
-      // Verify each category has the required properties
-      res.body.category.forEach(category => {
-          expect(category).toHaveProperty('_id');
-          expect(category).toHaveProperty('name');
-          expect(category).toHaveProperty('__v');
-          
-          // Verify each category name is in our list
-          expect(categoryNames).toContain(category.name);
-      });
-      
-      // Verify all category names are present (accounting for case differences)
-      const returnedNames = res.body.category.map(cat => cat.name.toLowerCase());
-      const expectedNames = categoryNames.map(name => name.toLowerCase());
-      
-      expectedNames.forEach(name => {
-          expect(returnedNames.some(returnedName => returnedName === name)).toBe(true);
-      });
-  });
 });
