@@ -254,4 +254,62 @@ describe('Product Integration Tests', () => {
         expect(relatedRes.body.products.length).toBe(1);
         expect(relatedRes.body.products[0].name).toBe("Related Product");
     });
+
+    it("should get product count successfully", async () => {
+        // Create multiple products for testing count
+        const category = await categoryModel.findOne({ name: "Valid Category" });
+        const mockPhotoPath = path.resolve(__dirname, '../ui-tests/galaxy.jpeg');
+        
+        // Create 3 products
+        const productData = [
+            {
+                name: "Count Product 1",
+                description: "First test product for count",
+                price: "100",
+                category: category._id.toString(),
+                quantity: "10",
+                shipping: "true"
+            },
+            {
+                name: "Count Product 2",
+                description: "Second test product for count",
+                price: "200",
+                category: category._id.toString(),
+                quantity: "20",
+                shipping: "false"
+            },
+            {
+                name: "Count Product 3",
+                description: "Third test product for count",
+                price: "300",
+                category: category._id.toString(),
+                quantity: "30",
+                shipping: "true"
+            }
+        ];
+        
+        // Create each product
+        for (const product of productData) {
+            await request(app)
+                .post("/api/v1/product/create-product")
+                .set("Authorization", `Bearer ${adminToken}`)
+                .field("name", product.name)
+                .field("description", product.description)
+                .field("price", product.price)
+                .field("category", product.category)
+                .field("quantity", product.quantity)
+                .field("shipping", product.shipping)
+                .attach("photo", mockPhotoPath);
+        }
+        
+        // Test the product count endpoint
+        const countRes = await request(app).get("/api/v1/product/product-count");
+        
+        // Verify the response
+        expect(countRes.status).toBe(200);
+        expect(countRes.body).toHaveProperty('success', true);
+        expect(countRes.body).toHaveProperty('total');
+        expect(typeof countRes.body.total).toBe('number');
+        expect(countRes.body.total).toBe(3); // Expecting 3 products created in this test
+    });
 });
