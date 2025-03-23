@@ -1,20 +1,20 @@
 import { test } from '@playwright/test';
 import path from 'path';
 
-import { 
-    adminLogin, 
-    createCategory, 
-    deleteCategory, 
-    checkCategoryExists, 
-    checkCategoryDoesNotExist  
-} from './CRUD-category.spec.cjs';
-
-import { 
-    createProduct, 
-    deleteProduct,
+import {
+    createProduct,
     viewProductOnHomePage,
-    productRemovedFromHomePage
-} from './CRUD-product.spec.cjs';
+    deleteProduct,
+    productRemovedFromHomePage,
+} from './productHelper.cjs'
+
+import {
+    adminLogin,
+    createCategory,
+    checkCategoryExists,
+    checkCategoryDoesNotExist,
+    deleteCategory,
+} from './categoryHelper.cjs'
 
 const newCategory = 'Phones';
 const iPhone = {

@@ -38,7 +38,7 @@ test.describe('Search functionality', () => {
     expect(resultsText).toContain('Found ');
     
     // Verify that at least one product card is displayed
-    await expect(page.locator('.card')).toBeVisible();
+    await expect(page.locator('.card').first()).toBeVisible();
     
     // Check if the searched product is in the results
     const resultTitles = await page.locator('.card-title').allTextContents();
