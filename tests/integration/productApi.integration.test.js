@@ -368,4 +368,100 @@ describe('Product Integration Tests', () => {
         expect(firstProduct).toHaveProperty('createdAt');
         expect(firstProduct).toHaveProperty('updatedAt');
     });
+
+    it("should get products by category slug successfully", async () => {
+        // Create a category for testing
+        const categoryName = "Test Books";
+        const category = await categoryModel.create({
+            name: categoryName
+        });
+        
+        // The slug should be automatically generated based on the name
+        const categorySlug = category.slug; // This assumes your model generates slugs
+        
+        // Create products in this category
+        const mockPhotoPath = path.resolve(__dirname, '../ui-tests/galaxy.jpeg');
+        
+        // Create 2 products in our test category
+        const productsInCategory = [
+            {
+                name: "Test Book 1",
+                description: "First test book in category",
+                price: "29.99",
+                category: category._id.toString(),
+                quantity: "15",
+                shipping: "true"
+            },
+            {
+                name: "Test Book 2",
+                description: "Second test book in category",
+                price: "39.99",
+                category: category._id.toString(),
+                quantity: "25",
+                shipping: "false"
+            }
+        ];
+        
+        // Create a product in a different category as well
+        const differentCategory = await categoryModel.create({
+            name: "Different Category"
+        });
+        
+        const productInDifferentCategory = {
+            name: "Different Product",
+            description: "Product in different category",
+            price: "49.99",
+            category: differentCategory._id.toString(),
+            quantity: "10",
+            shipping: "true"
+        };
+        
+        // Create all products
+        for (const product of [...productsInCategory, productInDifferentCategory]) {
+            await request(app)
+                .post("/api/v1/product/create-product")
+                .set("Authorization", `Bearer ${adminToken}`)
+                .field("name", product.name)
+                .field("description", product.description)
+                .field("price", product.price)
+                .field("category", product.category)
+                .field("quantity", product.quantity)
+                .field("shipping", product.shipping)
+                .attach("photo", mockPhotoPath);
+        }
+        
+        // Test the product-category endpoint with our category slug
+        const categoryRes = await request(app).get(`/api/v1/product/product-category/${categorySlug}`);
+        
+        // Verify the response
+        expect(categoryRes.status).toBe(200);
+        expect(categoryRes.body).toHaveProperty('success', true);
+        
+        // Verify category information
+        expect(categoryRes.body).toHaveProperty('category');
+        expect(categoryRes.body.category).toHaveProperty('_id');
+        expect(categoryRes.body.category).toHaveProperty('name', categoryName);
+        expect(categoryRes.body.category).toHaveProperty('slug', categorySlug);
+        
+        // Verify products information
+        expect(categoryRes.body).toHaveProperty('products');
+        expect(Array.isArray(categoryRes.body.products)).toBe(true);
+        expect(categoryRes.body.products.length).toBe(2); // Should only return the 2 products in this category
+        
+        // Verify first product structure
+        const firstProduct = categoryRes.body.products[0];
+        expect(firstProduct).toHaveProperty('_id');
+        expect(firstProduct).toHaveProperty('name');
+        expect(firstProduct).toHaveProperty('slug');
+        expect(firstProduct).toHaveProperty('description');
+        expect(firstProduct).toHaveProperty('price');
+        expect(firstProduct).toHaveProperty('category');
+        expect(firstProduct).toHaveProperty('quantity');
+        expect(firstProduct).toHaveProperty('shipping');
+        expect(firstProduct).toHaveProperty('photo');
+        
+        // Verify product names match what we created
+        const productNames = categoryRes.body.products.map(p => p.name).sort();
+        expect(productNames).toEqual(['Test Book 1', 'Test Book 2'].sort());
+    });
 });
