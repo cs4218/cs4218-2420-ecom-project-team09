@@ -12,7 +12,7 @@ import {
   userResetPassword,
   assertUserResetPasswordSuccess,
   assertUserResetPasswordFailed,
-} from "./CRUD-auth.spec";
+} from "./authHelper.js";
 import userModel from "../../models/userModel.js";
 import connectDB from "../../config/db.js";
 

@@ -1,12 +1,12 @@
 import { test, expect } from "@playwright/test";
 import userModel from "../../models/userModel.js";
 import connectDB from "../../config/db.js";
-import { getSampleUser } from "./CRUD-auth.spec";
+import { getSampleUser } from "./authHelper.js";
 import { hashPassword } from "../../helpers/authHelper.js";
 import productModel from "../../models/productModel.js";
-import { userLogin, assertUserLoginSuccess } from "./CRUD-auth.spec";
+import { userLogin, assertUserLoginSuccess } from "./authHelper.js";
 import mongoose from "mongoose";
-import { addProductToCart, assertProductAddedToCart, assertItemsInCart, viewCart, removeItemFromCart, addProductToCartInDetails, assertProductAddedToCartInDetails } from "./CRUD-cart.spec.js";
+import { addProductToCart, assertProductAddedToCart, assertItemsInCart, viewCart, removeItemFromCart, addProductToCartInDetails, assertProductAddedToCartInDetails } from "./cartHelper.js";
 
 const user = getSampleUser('cart.spec.js@example.com');
 const products = [
