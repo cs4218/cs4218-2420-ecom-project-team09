@@ -180,7 +180,6 @@ describe('Category Integration Tests', () => {
       res.body.category.forEach(category => {
           expect(category).toHaveProperty('_id');
           expect(category).toHaveProperty('name');
-          // expect(category).toHaveProperty('slug');
           expect(category).toHaveProperty('__v');
           
           // Verify each category name is in our list

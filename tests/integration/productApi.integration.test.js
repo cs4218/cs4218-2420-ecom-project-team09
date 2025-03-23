@@ -552,4 +552,76 @@ describe('Product Integration Tests', () => {
         expect(parseFloat(highPriceFiltersRes.body.products[0].price)).toBeGreaterThanOrEqual(80);
         expect(parseFloat(highPriceFiltersRes.body.products[0].price)).toBeLessThanOrEqual(99);
     });
+
+    it("should return 404 when filtering with non-existent category", async () => {
+        // Create a non-existent category ID
+        const nonExistentCategoryId = "60a5c1e5c0d0a43a5c68e671"; // Random valid ObjectId format
+        
+        // Test the product-filters endpoint with non-existent category
+        const filtersPayload = {
+            "checked": [nonExistentCategoryId],
+            "radio": [0, 19]
+        };
+        
+        const filtersRes = await request(app)
+            .post("/api/v1/product/product-filters")
+            .send(filtersPayload);
+        
+        // Verify the response returns 404
+        expect(filtersRes.status).toBe(404);
+        expect(filtersRes.body).toHaveProperty('success', false);
+        expect(filtersRes.body).toHaveProperty('message');
+        expect(filtersRes.body.message).toContain('Category not found');
+    });
+    
+    it("should return 404 when filtering with invalid price range", async () => {
+        // Get an existing category first to ensure valid category
+        const categoriesRes = await request(app)
+            .get("/api/v1/category/get-categories");
+        
+        const categoryId = categoriesRes.body.categories[0]._id;
+        
+        // Test the product-filters endpoint with invalid price range (negative values)
+        const filtersPayload = {
+            "checked": [categoryId],
+            "radio": [-10, -1] // Invalid price range
+        };
+        
+        const filtersRes = await request(app)
+            .post("/api/v1/product/product-filters")
+            .send(filtersPayload);
+        
+        // Verify the response returns 404
+        expect(filtersRes.status).toBe(404);
+        expect(filtersRes.body).toHaveProperty('success', false);
+        expect(filtersRes.body).toHaveProperty('message');
+        expect(filtersRes.body.message).toContain('Invalid price range');
+    });
+    
+    it("should return all products with status 200 when no filters are specified", async () => {
+        // Test the product-filters endpoint with empty filters
+        const filtersPayload = {
+            "checked": [],
+            "radio": []
+        };
+        
+        const filtersRes = await request(app)
+            .post("/api/v1/product/product-filters")
+            .send(filtersPayload);
+        
+        // Verify the response
+        expect(filtersRes.status).toBe(200);
+        expect(filtersRes.body).toHaveProperty('success', true);
+        expect(filtersRes.body).toHaveProperty('products');
+        expect(Array.isArray(filtersRes.body.products)).toBe(true);
+        
+        // Should return all products (at least the 3 we created in the previous test)
+        expect(filtersRes.body.products.length).toBeGreaterThanOrEqual(3);
+        
+        // Verify the returned products include our test products
+        const productNames = filtersRes.body.products.map(p => p.name);
+        expect(productNames).toContain("Low Price Product");
+        expect(productNames).toContain("Medium Price Product");
+        expect(productNames).toContain("High Price Product");
+    });
 });
