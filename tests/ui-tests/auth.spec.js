@@ -18,7 +18,13 @@ import connectDB from "../../config/db.js";
 
 test.beforeAll(async () => {
   await connectDB();
-  await userModel.deleteMany({ email: /@example\.com$/ });
+  await userModel.deleteMany({ email: "userRegisterAndLogin@example.com" });
+  await userModel.deleteMany({ email: "userCannotLoginWithoutRegister@example.com"});
+  await userModel.deleteMany({ email: "userUpdateProfile@example.com"});
+  await userModel.deleteMany({ email: "userUpdateProfileFailWithIncorrectPassword@example.com"});
+  await userModel.deleteMany({ email: "userResetPassword@example.com"});
+  await userModel.deleteMany({ email: "userResetPasswordFailWithIncorrectEmail@example.com"});
+  await userModel.deleteMany({ email: "userResetPasswordFailWithIncorrectAnswer@example.com"});
 });
 
 test("user register and login", async ({ page }) => {

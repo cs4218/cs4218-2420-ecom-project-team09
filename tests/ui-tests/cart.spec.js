@@ -53,7 +53,7 @@ const products = [
 
 test.beforeAll(async () => {
   await connectDB();
-  await userModel.deleteMany({ });
+  await userModel.deleteMany({ email: user.email });
 
   try {
     await new userModel({
